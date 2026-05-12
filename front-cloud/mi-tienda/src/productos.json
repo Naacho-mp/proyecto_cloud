@@ -1,0 +1,6 @@
+[
+  {"id": 1, "nombre": "Jockey UCM", "precio": 14990, "imagen": "jockey.png"},
+  {"id": 2, "nombre": "Mochila UCM 26 Lts", "precio": 19990, "imagen": "mochila.png"},
+  {"id": 3, "nombre": "Polera UCM Unisex", "precio": 12990, "imagen": "polera.png"},
+  {"id": 4, "nombre": "Tazón UCM", "precio": 9990, "imagen": "tazon.png"}
+]

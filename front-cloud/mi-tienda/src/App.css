@@ -1,0 +1,38 @@
+
+.nav-logo {
+  height: 60px;     
+  width: auto;      
+  object-fit: contain;
+  transition: transform 0.3s ease; 
+}
+
+@media (max-width: 768px) {
+  .nav-logo {
+    height: 30px;
+  }
+}
+.nav-logo:hover {
+  transform: scale(1.05);
+}
+
+.titulo-productos{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: bold;
+  color: rgb(62, 113, 207);
+}
+
+.img-fluid{
+  border-radius: 10px;
+}
+
+.carta-hover {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+
+.carta-hover:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; 
+  z-index: 1;
+}

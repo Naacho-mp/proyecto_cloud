@@ -31,7 +31,7 @@ const imagenes = {
                   style={{ height: '150px', objectFit: 'contain' }}/>
               </div>
               
-              <div className="card-body d-flex flex-column">
+              <div className="card-body d-flex flex-column text-center">
                 <h6 className="card-title fw-bold">{producto.nombre}</h6>
                 
                 <div className="mt-auto">

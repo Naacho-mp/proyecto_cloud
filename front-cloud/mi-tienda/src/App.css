@@ -2,17 +2,13 @@
 .nav-logo {
   height: 60px;     
   width: auto;      
-  object-fit: contain;
-  transition: transform 0.3s ease; 
+  object-fit: contain; 
 }
 
 @media (max-width: 768px) {
   .nav-logo {
     height: 30px;
   }
-}
-.nav-logo:hover {
-  transform: scale(1.05);
 }
 
 .titulo-productos{
@@ -35,4 +31,49 @@
   transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; 
   z-index: 1;
+}
+
+/*-------------- LOGIN---------- */
+.login-container {
+  min-height: 80vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.login-titulo {
+  color: rgb(62, 113, 207);
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.login-subtitulo {
+  color: #6c757d;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 1.5rem;
+}
+
+.btn.login-btn {
+  background-color: rgb(62, 113, 207);
+  color: rgb(241, 241, 241);
+  font-weight: 600;
+  width: 100%;
+  border: none;
+}
+
+.btn.login-btn:hover {
+  background-color: rgb(45, 90, 180);
+  color: rgb(241, 241, 241);
 }

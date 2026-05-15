@@ -1,0 +1,68 @@
+# name: build and push para AWS ECR - ECS
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   build-and-push:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Descargar el Codigo
+#         uses: actions/checkout@v4
+
+#       - name: Configurar AWS Credenciales
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION}}
+
+#       - name: Login en AWS ECR
+#         uses: aws-actions/amazon-ecr-login@v2
+
+#       - name: Build y push Frontend - React
+#         run: |
+#           docker build -t front-cloud ./front-cloud/mi-tienda
+#           docker tag front-cloud:latest 108631844678.dkr.ecr.us-east-1.amazonaws.com/front-react-cloud:latest
+#           docker push 108631844678.dkr.ecr.us-east-1.amazonaws.com/front-react-cloud:latest
+
+#       - name: Build y push Backend - FastAPI
+#         run: |
+#           docker build -t back-cloud ./back-cloud/servicio2
+#           docker tag back-cloud:latest 108631844678.dkr.ecr.us-east-1.amazonaws.com/back-fastapi-cloud:latest
+#           docker push 108631844678.dkr.ecr.us-east-1.amazonaws.com/back-fastapi-cloud:latest
+
+#       - name: Build y push Api Pagos - WebPay
+#         run: |
+#           docker build -t api-pagos ./apiwebpay
+#           docker tag api-pagos:latest 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-pagos-cloud:latest
+#           docker push 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-pagos-cloud:latest
+
+#           //--------------------Falta editar esta parte---------------------
+
+#       - name: Actualizar Frontend en AWS ECS
+#         run: |
+#           aws ecs update-service \
+#           --cluster ucm_cloud_cluster \
+#           --service servicio1-task-service-ze3or7gq \
+#           --force-new-deployment
+
+#       - name: Actualizar Backend en AWS ECS
+#         run: |
+#           aws ecs update-service \
+#           --cluster ucm_cloud_cluster \
+#           --service servicio2-task-service-jw4zpw04 \
+#           --force-new-deployment
+
+#       - name: Actualizar Api Pagos en AWS ECS
+#         run: |
+#           aws ecs update-service \
+#           --cluster ucm_cloud_cluster \
+#           --service servicio3-task-service-eu2rsw71 \
+#           --force-new-deployment
+          
+        
+

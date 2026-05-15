@@ -1,0 +1,6 @@
+__pycache__
+*.pyc
+.env
+alter_table.py
+crear_tabla.py
+*.pem

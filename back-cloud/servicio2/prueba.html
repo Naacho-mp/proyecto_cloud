@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirigiendo a Pago...</title>
+</head>
+<body onload="document.getElementById('webpay-form').submit();">
+    <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
+        <h2>Redirigiendo a la pasarela de pago...</h2>
+        <p>Si no eres redirigido en unos segundos, haz clic en el botón.</p>
+        
+        <form id="webpay-form" action="https://webpay3gint.transbank.cl/webpayserver/initTransaction" method="POST">
+            <input type="hidden" name="token_ws" value="01ab7e3296d8884565e6e1cb7117c56a7ebb7b9bc4c2c78f4a6ff08d61d09fad" />
+            
+            <button type="submit" style="padding: 10px 20px; cursor: pointer;">
+                Ir a pagar
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Este script asegura que el formulario se envíe apenas cargue la página
+        window.onload = function() {
+            document.getElementById('webpay-form').submit();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+
+{
+  "info": {
+    "name": "Webpay Plus API - Pruebas Locales",
+    "description": "Colección de peticiones para probar la API REST local de integración con Webpay Plus de Transbank.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "webpay_token",
+      "value": "REEMPLAZAR_CON_TOKEN_GENERADO",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        },
+        "description": "Verifica si la API está arriba y corriendo."
+      }
+    },
+    {
+      "name": "2. Información API",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/info",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "info"
+          ]
+        },
+        "description": "Obtiene información general sobre los endpoints disponibles."
+      }
+    },
+    {
+      "name": "3. Crear Transacción (Create)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if(jsonData.success && jsonData.data && jsonData.data.token) {",
+              "    pm.collectionVariables.set(\"webpay_token\", jsonData.data.token);",
+              "    console.log(\"Token guardado automáticamente: \" + jsonData.data.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"buyOrder\": \"ORDEN-12345\",\n  \"sessionId\": \"SESION-12345\",\n  \"amount\": 1000,\n  \"returnUrl\": \"http://localhost:3000/callback\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/webpay/create",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webpay",
+            "create"
+          ]
+        },
+        "description": "Inicia una transacción en Webpay. El token devuelto se guarda automáticamente en la variable `webpay_token` si usas Postman."
+      }
+    },
+    {
+      "name": "4. Confirmar Transacción (Commit)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{webpay_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/webpay/commit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webpay",
+            "commit"
+          ]
+        },
+        "description": "Confirma la transacción recibiendo el token_ws una vez que el usuario termina el flujo de pago en el navegador."
+      }
+    },
+    {
+      "name": "5. Consultar Estado (Status)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{webpay_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/webpay/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webpay",
+            "status"
+          ]
+        },
+        "description": "Permite consultar el estado actual de una transacción enviando su token."
+      }
+    },
+    {
+      "name": "6. Reembolsar Transacción (Refund)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{webpay_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/webpay/refund",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webpay",
+            "refund"
+          ]
+        },
+        "description": "Anula o reembolsa una transacción previamente confirmada (y aprobada)."
+      }
+    }
+  ]
+}
+

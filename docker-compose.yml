@@ -1,0 +1,13 @@
+services:
+  # Servicio Java Webpay
+  api-webpay:
+    build:
+      context: ./apiwebpay
+      dockerfile: Dockerfile
+    container_name: servicio_webpay_java
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      # Aquí puedes añadir las credenciales de Transbank más adelante
+    restart: unless-stopped

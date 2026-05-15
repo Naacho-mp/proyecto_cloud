@@ -1,5 +1,5 @@
 
-# Proyecto Cloud - Sistema de Microservicios 🚀
+# Proyecto Cloud - Sistema de Microservicios 
 
 Este proyecto consiste en una arquitectura de microservicios diseñada para ser desplegada en entornos de nube (AWS). Cada directorio en la raíz representa un servicio independiente con su propia lógica y tecnología.
 

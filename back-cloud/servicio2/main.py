@@ -7,9 +7,11 @@ from api.api_carrito import api_carrito
 
 app = FastAPI()
 
+print("esto se cambio")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], 
+    allow_origins=["*"], # Puertos donde corre tu Nginx
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

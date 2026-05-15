@@ -1,0 +1,9 @@
+services:
+  frontend-prod:
+    build:
+      context: ./mi-tienda
+      dockerfile: Dockerfile
+    container_name: tienda_frontend_aws
+    ports:
+      - "80:80"
+    restart: unless-stopped

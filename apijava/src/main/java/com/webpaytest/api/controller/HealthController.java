@@ -13,39 +13,38 @@ import com.webpaytest.api.dto.ApiResponse;
  * Proporciona endpoints para verificar el estado de la API.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/java")
 public class HealthController {
 
-	/**
-	 * Verifica que la API está funcionando
-	 *
-	 * Endpoint: GET /api/health
-	 * Response: 200 OK
-	 */
-	@GetMapping("/health")
-	public ResponseEntity<ApiResponse<String>> health() {
-		ApiResponse<String> response = ApiResponse.success(
-				"API running",
-				"API está funcionando correctamente");
+    /**
+     * Verifica que la API está funcionando
+     *
+     * Endpoint: GET /java/health
+     * Response: 200 OK
+     */
+    @GetMapping("/health")
+    public ResponseEntity<ApiResponse<String>> health() {
+        ApiResponse<String> response = ApiResponse.success(
+                "API running",
+                "API está funcionando correctamente");
 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
-	/**
-	 * Información general de la API
-	 *
-	 * Endpoint: GET /api/info
-	 */
-	@GetMapping("/info")
-	public ResponseEntity<ApiResponse<String>> info() {
-		String message = "Webpay Plus Integration API v1.0 - "
-				+ "Integration Environment - "
-				+ "Endpoints disponibles: "
-				+ "/api/webpay/create, /api/webpay/commit, /api/webpay/status, /api/webpay/refund";
+    /**
+     * Información general de la API
+     *
+     * Endpoint: GET /java/info
+     */
+    @GetMapping("/info")
+    public ResponseEntity<ApiResponse<String>> info() {
+        String message = "Webpay Plus Integration API v1.0 - "
+                + "Integration Environment - "
+                + "Endpoints disponibles: "
+                + "/java/create, /java/commit, /java/status, /java/refund";
 
-		ApiResponse<String> response = ApiResponse.success(message, "Información de la API");
+        ApiResponse<String> response = ApiResponse.success(message, "Información de la API");
 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
-

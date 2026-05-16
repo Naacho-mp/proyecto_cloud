@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping; // Añadido para soportar el Health Check
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,8 +22,11 @@ import com.webpaytest.api.dto.RefundTransactionRequest;
 import com.webpaytest.api.dto.RefundTransactionResponse;
 import com.webpaytest.api.service.WebpayService;
 
+import java.util.HashMap; // Añadido para estructurar la respuesta limpia
+import java.util.Map;     // Añadido para estructurar la respuesta limpia
+
 /**
- * Controlador REST para operaciones de Webpay Plus
+ * Rest para operaciones de Webpay Plus
  *
  * Expone los siguientes endpoints:
  * - POST /java/create: Crear transacción
@@ -204,5 +208,23 @@ public class WebpayController {
                 "Transacción reembolsada exitosamente");
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /**
+     * Comprobación de estado para el Application Load Balancer de AWS
+     *
+     * Endpoint: GET /java/health
+     *
+     * Response (200 OK):
+     * {
+     * "status": "UP"
+     * }
+     */
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> healthCheck() {
+        logger.debug("Health check invocado por el balanceador de carga");
+        Map<String, String> status = new HashMap<>();
+        status.put("status", "UP");
+        return ResponseEntity.ok(status);
     }
 }

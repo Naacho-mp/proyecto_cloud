@@ -1,0 +1,8 @@
+ curl -X POST 98.81.16.235:8080/api/webpay/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 50000,
+    "buyOrder": "ORD-12345",
+    "sessionId": "sesion-12345",
+    "returnUrl": "http://localhost:3000/callback"
+  }'

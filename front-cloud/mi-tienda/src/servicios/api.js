@@ -1,6 +1,7 @@
-const BASE_URL = "balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/api"
+// Agrega el http:// al principio de la URL
+const BASE_URL = "http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/api"// Productos
 
-// Productos
+
 export const getProductos = async () => {
     const response = await fetch(`${BASE_URL}/productos/`)
     return response.json()

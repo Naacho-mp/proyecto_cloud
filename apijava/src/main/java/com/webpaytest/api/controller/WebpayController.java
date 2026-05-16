@@ -220,7 +220,7 @@ public class WebpayController {
      * "status": "UP"
      * }
      */
-    @GetMapping("/health")
+    @GetMapping("/health2")
     public ResponseEntity<Map<String, String>> healthCheck() {
         logger.debug("Health check invocado por el balanceador de carga");
         Map<String, String> status = new HashMap<>();

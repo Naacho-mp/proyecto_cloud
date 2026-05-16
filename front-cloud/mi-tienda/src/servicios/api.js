@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000"
+const BASE_URL = "balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/api"
 
 // Productos
 export const getProductos = async () => {

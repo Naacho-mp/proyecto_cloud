@@ -5,11 +5,11 @@ from api.api_usuarios import api_usuarios
 from api.api_base_datos import api_conexion
 from api.api_carrito import api_carrito
 
-# Al agregar root_path, FastAPI asume que el balanceador te manda 
-# el tráfico a través de ese prefijo.
-app = FastAPI(root_path="/api")
+# 1. CORRECCIÓN: Eliminamos 'root_path="/api"'. 
+# Ya no dejamos que FastAPI intente "adivinar" o recortar rutas de manera implícita.
+app = FastAPI()
 
-print("esto se cambio")
+print("Backend inicializado con configuración de rutas fijas para AWS")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,9 +19,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Los routers se quedan exactamente igual, pero ahora 
-# responderán bajo /api/productos, /api/usuarios, etc.
-app.include_router(api_productos)
-app.include_router(api_usuarios)
-app.include_router(api_conexion)
-app.include_router(api_carrito)
+# 2. CORRECCIÓN: Añadimos 'prefix="/api"' de forma explícita a cada router.
+# Ahora FastAPI sabrá que debe escuchar exactamente en:
+# /api/productos, /api/usuarios/login, etc., tal cual lo envía el ALB.
+app.include_router(api_productos, prefix="/api")
+app.include_router(api_usuarios, prefix="/api")
+app.include_router(api_conexion, prefix="/api")
+app.include_router(api_carrito, prefix="/api")
+
+# 3. ADICIÓN: Endpoint exclusivo para el Health Check de AWS.
+# Esto responderá un HTTP 200 limpio ante una petición GET.
+@app.get("/api/health")
+async def health_check():
+    return {"status": "healthy", "environment": "aws-production"}

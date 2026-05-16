@@ -25,184 +25,184 @@ import com.webpaytest.api.service.WebpayService;
  * Controlador REST para operaciones de Webpay Plus
  *
  * Expone los siguientes endpoints:
- * - POST /api/webpay/create: Crear transacción
- * - POST /api/webpay/commit: Confirmar transacción
- * - POST /api/webpay/status: Consultar estado
- * - POST /api/webpay/refund: Reembolsar transacción
+ * - POST /java/create: Crear transacción
+ * - POST /java/commit: Confirmar transacción
+ * - POST /java/status: Consultar estado
+ * - POST /java/refund: Reembolsar transacción
  *
  * Todos los endpoints validan las requests y retornan
  * respuestas JSON consistentes.
  */
 @RestController
-@RequestMapping("/api/webpay")
+@RequestMapping("/java")
 @Validated
 public class WebpayController {
 
-	private static final Logger logger = LoggerFactory.getLogger(WebpayController.class);
+    private static final Logger logger = LoggerFactory.getLogger(WebpayController.class);
 
-	private final WebpayService webpayService;
+    private final WebpayService webpayService;
 
-	public WebpayController(WebpayService webpayService) {
-		this.webpayService = webpayService;
-	}
+    public WebpayController(WebpayService webpayService) {
+        this.webpayService = webpayService;
+    }
 
-	/**
-	 * Crea una nueva transacción de Webpay
-	 *
-	 * Endpoint: POST /api/webpay/create
-	 *
-	 * Request JSON:
-	 * {
-	 *   "amount": 50000,
-	 *   "buyOrder": "ORD-001",
-	 *   "sessionId": "sesion-001",
-	 *   "returnUrl": "http://localhost:3000/return"
-	 * }
-	 *
-	 * Response (201 Created):
-	 * {
-	 *   "success": true,
-	 *   "message": "Transacción creada exitosamente",
-	 *   "data": {
-	 *     "token": "01928372ee1a2d9e",
-	 *     "url": "https://webpay3gplus.transbank.cl/webpayplus/initTransaction",
-	 *     "buyOrder": "ORD-001",
-	 *     "sessionId": "sesion-001"
-	 *   }
-	 * }
-	 */
-	@PostMapping("/create")
-	public ResponseEntity<ApiResponse<CreateTransactionResponse>> createTransaction(
-			@Valid @RequestBody CreateTransactionRequest request) {
-		logger.info("Request para crear transacción recibida");
+    /**
+     * Crea una nueva transacción de Webpay
+     *
+     * Endpoint: POST /java/create
+     *
+     * Request JSON:
+     * {
+     * "amount": 50000,
+     * "buyOrder": "ORD-001",
+     * "sessionId": "sesion-001",
+     * "returnUrl": "http://localhost:3000/return"
+     * }
+     *
+     * Response (201 Created):
+     * {
+     * "success": true,
+     * "message": "Transacción creada exitosamente",
+     * "data": {
+     * "token": "01928372ee1a2d9e",
+     * "url": "https://webpay3gplus.transbank.cl/webpayplus/initTransaction",
+     * "buyOrder": "ORD-001",
+     * "sessionId": "sesion-001"
+     * }
+     * }
+     */
+    @PostMapping("/create")
+    public ResponseEntity<ApiResponse<CreateTransactionResponse>> createTransaction(
+            @Valid @RequestBody CreateTransactionRequest request) {
+        logger.info("Request para crear transacción recibida");
 
-		CreateTransactionResponse data = webpayService.createTransaction(request);
+        CreateTransactionResponse data = webpayService.createTransaction(request);
 
-		ApiResponse<CreateTransactionResponse> response = ApiResponse.success(
-				data,
-				"Transacción creada exitosamente");
+        ApiResponse<CreateTransactionResponse> response = ApiResponse.success(
+                data,
+                "Transacción creada exitosamente");
 
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
-	}
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
 
-	/**
-	 * Confirma una transacción de Webpay
-	 *
-	 * Endpoint: POST /api/webpay/commit
-	 *
-	 * Se llamaría después de que el usuario retorna de Webpay
-	 * con el token en la URL (query param).
-	 *
-	 * Request JSON:
-	 * {
-	 *   "token": "01928372ee1a2d9e"
-	 * }
-	 *
-	 * Response (200 OK):
-	 * {
-	 *   "success": true,
-	 *   "message": "Transacción confirmada exitosamente",
-	 *   "data": {
-	 *     "buyOrder": "ORD-001",
-	 *     "cardNumber": "****6623",
-	 *     "authorizationCode": "123456",
-	 *     "paymentTypeCode": "VD",
-	 *     "responseCode": 0,
-	 *     "amount": "50000",
-	 *     "status": "AUTHORIZED",
-	 *     "installmentsNumber": null,
-	 *     "installmentsAmount": null
-	 *   }
-	 * }
-	 */
-	@PostMapping("/commit")
-	public ResponseEntity<ApiResponse<CommitTransactionResponse>> commitTransaction(
-			@Valid @RequestBody CommitTransactionRequest request) {
-		logger.info("Request para confirmar transacción recibida");
+    /**
+     * Confirma una transacción de Webpay
+     *
+     * Endpoint: POST /java/commit
+     *
+     * Se llamaría después de que el usuario retorna de Webpay
+     * con el token en la URL (query param).
+     *
+     * Request JSON:
+     * {
+     * "token": "01928372ee1a2d9e"
+     * }
+     *
+     * Response (200 OK):
+     * {
+     * "success": true,
+     * "message": "Transacción confirmada exitosamente",
+     * "data": {
+     * "buyOrder": "ORD-001",
+     * "cardNumber": "****6623",
+     * "authorizationCode": "123456",
+     * "paymentTypeCode": "VD",
+     * "responseCode": 0,
+     * "amount": "50000",
+     * "status": "AUTHORIZED",
+     * "installmentsNumber": null,
+     * "installmentsAmount": null
+     * }
+     * }
+     */
+    @PostMapping("/commit")
+    public ResponseEntity<ApiResponse<CommitTransactionResponse>> commitTransaction(
+            @Valid @RequestBody CommitTransactionRequest request) {
+        logger.info("Request para confirmar transacción recibida");
 
-		CommitTransactionResponse data = webpayService.commitTransaction(request);
+        CommitTransactionResponse data = webpayService.commitTransaction(request);
 
-		ApiResponse<CommitTransactionResponse> response = ApiResponse.success(
-				data,
-				"Transacción confirmada exitosamente");
+        ApiResponse<CommitTransactionResponse> response = ApiResponse.success(
+                data,
+                "Transacción confirmada exitosamente");
 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
-	/**
-	 * Consulta el estado de una transacción
-	 *
-	 * Endpoint: POST /api/webpay/status
-	 *
-	 * Request JSON:
-	 * {
-	 *   "token": "01928372ee1a2d9e"
-	 * }
-	 *
-	 * Response (200 OK):
-	 * {
-	 *   "success": true,
-	 *   "message": "Estado consultado exitosamente",
-	 *   "data": {
-	 *     "buyOrder": "ORD-001",
-	 *     "cardNumber": "****6623",
-	 *     "authorizationCode": "123456",
-	 *     "paymentTypeCode": "VD",
-	 *     "responseCode": 0,
-	 *     "status": "AUTHORIZED",
-	 *     "installmentsNumber": null,
-	 *     "installmentsAmount": null
-	 *   }
-	 * }
-	 */
-	@PostMapping("/status")
-	public ResponseEntity<ApiResponse<GetStatusResponse>> getTransactionStatus(
-			@Valid @RequestBody GetStatusRequest request) {
-		logger.info("Request para consultar estado recibida");
+    /**
+     * Consulta el estado de una transacción
+     *
+     * Endpoint: POST /java/status
+     *
+     * Request JSON:
+     * {
+     * "token": "01928372ee1a2d9e"
+     * }
+     *
+     * Response (200 OK):
+     * {
+     * "success": true,
+     * "message": "Estado consultado exitosamente",
+     * "data": {
+     * "buyOrder": "ORD-001",
+     * "cardNumber": "****6623",
+     * "authorizationCode": "123456",
+     * "paymentTypeCode": "VD",
+     * "responseCode": 0,
+     * "status": "AUTHORIZED",
+     * "installmentsNumber": null,
+     * "installmentsAmount": null
+     * }
+     * }
+     */
+    @PostMapping("/status")
+    public ResponseEntity<ApiResponse<GetStatusResponse>> getTransactionStatus(
+            @Valid @RequestBody GetStatusRequest request) {
+        logger.info("Request para consultar estado recibida");
 
-		GetStatusResponse data = webpayService.getTransactionStatus(request);
+        GetStatusResponse data = webpayService.getTransactionStatus(request);
 
-		ApiResponse<GetStatusResponse> response = ApiResponse.success(
-				data,
-				"Estado consultado exitosamente");
+        ApiResponse<GetStatusResponse> response = ApiResponse.success(
+                data,
+                "Estado consultado exitosamente");
 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
-	/**
-	 * Reembolsa o anula una transacción
-	 *
-	 * Endpoint: POST /api/webpay/refund
-	 *
-	 * Request JSON:
-	 * {
-	 *   "token": "01928372ee1a2d9e"
-	 * }
-	 *
-	 * Response (200 OK):
-	 * {
-	 *   "success": true,
-	 *   "message": "Transacción reembolsada exitosamente",
-	 *   "data": {
-	 *     "type": "REFUND",
-	 *     "token": "01928372ee1a2d9e",
-	 *     "refundedAmount": 50000,
-	 *     "balance": 0,
-	 *     "status": "REFUNDED"
-	 *   }
-	 * }
-	 */
-	@PostMapping("/refund")
-	public ResponseEntity<ApiResponse<RefundTransactionResponse>> refundTransaction(
-			@Valid @RequestBody RefundTransactionRequest request) {
-		logger.info("Request para reembolsar transacción recibida");
+    /**
+     * Reembolsa o anula una transacción
+     *
+     * Endpoint: POST /java/refund
+     *
+     * Request JSON:
+     * {
+     * "token": "01928372ee1a2d9e"
+     * }
+     *
+     * Response (200 OK):
+     * {
+     * "success": true,
+     * "message": "Transacción reembolsada exitosamente",
+     * "data": {
+     * "type": "REFUND",
+     * "token": "01928372ee1a2d9e",
+     * "refundedAmount": 50000,
+     * "balance": 0,
+     * "status": "REFUNDED"
+     * }
+     * }
+     */
+    @PostMapping("/refund")
+    public ResponseEntity<ApiResponse<RefundTransactionResponse>> refundTransaction(
+            @Valid @RequestBody RefundTransactionRequest request) {
+        logger.info("Request para reembolsar transacción recibida");
 
-		RefundTransactionResponse data = webpayService.refundTransaction(request);
+        RefundTransactionResponse data = webpayService.refundTransaction(request);
 
-		ApiResponse<RefundTransactionResponse> response = ApiResponse.success(
-				data,
-				"Transacción reembolsada exitosamente");
+        ApiResponse<RefundTransactionResponse> response = ApiResponse.success(
+                data,
+                "Transacción reembolsada exitosamente");
 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

@@ -1,5 +1,5 @@
 // Agrega el http:// al principio de la URL
-const BASE_URL = "http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/api"// Productos
+const BASE_URL = "/api"// Productos
 
 
 export const getProductos = async () => {

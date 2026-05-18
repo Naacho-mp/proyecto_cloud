@@ -42,14 +42,24 @@ public class WebpayService {
 	 */
 	public CreateTransactionResponse createTransaction(CreateTransactionRequest request) {
 		logger.info("Creando transacción - Orden: {}, Monto: {}",
-			request.getBuyOrder(), request.getAmount());
+				request.getBuyOrder(), request.getAmount());
+
+		// 🔥 FORZAR HTTP: toma la returnUrl original y reemplaza https por http
+		String originalReturnUrl = request.getReturnUrl();
+		String forcedHttpReturnUrl = originalReturnUrl.replace("https://", "http://");
+
+		logger.info("📍 ReturnUrl original: {}", originalReturnUrl);
+		logger.info("✅ ReturnUrl forzada a HTTP: {}", forcedHttpReturnUrl);
+
+		// Si la URL ya era http, el replace no hará nada
+		// Si era https, la convertimos a http
 
 		try {
 			var output = transaction.create(
 					request.getBuyOrder(),
 					request.getSessionId(),
 					request.getAmount(),
-					request.getReturnUrl()
+					forcedHttpReturnUrl   // <-- Usamos la versión HTTP forzada
 			);
 
 			logger.info("Transacción creada - Token: {}", output.getToken());
@@ -68,15 +78,6 @@ public class WebpayService {
 					"CREATE_ERROR");
 		}
 	}
-
-	/**
-	 * Confirma una transacción después del pago
-	 *
-	 * IMPORTANTE:
-	 * - Cada token solo puede ser procesado UNA VEZ
-	 * - Llamadas duplicadas resultan en error 422: "Transaction already locked"
-	 * - El frontend debe implementar un flag para evitar duplicados
-	 */
 	public CommitTransactionResponse commitTransaction(CommitTransactionRequest request) {
 		logger.info("Confirmando transacción - Token: {}", request.getToken());
 

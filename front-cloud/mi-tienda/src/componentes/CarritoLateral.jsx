@@ -38,19 +38,13 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       const amount = Math.round(totalCarrito);
       const buyOrder = `ORD-${Date.now()}-${usuario.id}`;
       const sessionId = String(usuario.id);
-      // Si no es localhost y es HTTP, cambiar a HTTPS
-        const returnUrl = `${window.location.origin}/webpay-retorno`;
+
+      //const returnUrl = `${window.location.origin}/webpay-retorno`;
+      const returnUrl = `http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/webpay-retorno`;
 
       // Guardar carrito en localStorage ANTES de ir a Webpay
       localStorage.setItem('carrito', JSON.stringify(carrito));
       console.log('[CarritoLateral] Carrito guardado en localStorage:', carrito);
-
-      console.log('[CarritoLateral] Payload para Webpay:', {
-        amount,
-        buyOrder,
-        sessionId,
-        returnUrl
-      });
 
       // 5. Crear transacción (con validaciones internas)
       const paymentData = await crearTransaccionPago(

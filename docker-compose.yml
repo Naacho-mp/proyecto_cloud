@@ -62,8 +62,8 @@ services:
     networks:
       - microservices-network
     environment:
-      - VITE_API_URL=http://localhost:8000/api
-      - VITE_WEBPAY_URL=http://localhost:8080/java
+      - VITE_API_URL=/api
+      - VITE_WEBPAY_URL=/java
     depends_on:
       - td-backend
       - td-java

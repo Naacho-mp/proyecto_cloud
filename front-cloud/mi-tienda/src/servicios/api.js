@@ -1,8 +1,11 @@
-// API Backend FastAPI
-const BASE_URL = "http://localhost:8000/api"
+// Detectar ambiente
+const isDevelopment = import.meta.env.DEV;
 
-// Java Webpay Backend
-const WEBPAY_URL = "http://localhost:8080/java"
+// En desarrollo: localhost
+// En producción (AWS ECS): ALB DNS
+const ALB_URL = "balanceador-carga-1567813537.us-east-1.elb.amazonaws.com";
+const BASE_URL = isDevelopment ? "http://localhost:8000/api" : `http://${ALB_URL}/api`;
+const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : `http://${ALB_URL}/java`;
 
 
 export const getProductos = async () => {

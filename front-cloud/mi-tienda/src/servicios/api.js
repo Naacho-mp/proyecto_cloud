@@ -96,12 +96,6 @@ export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUr
         throw new Error('returnUrl es requerido');
     }
 
-    // En desarrollo: permitir http://localhost
-    // En producción: requerir https://
-    const isDevelopment = returnUrl.includes('localhost') || returnUrl.includes('127.0.0.1');
-    if (!isDevelopment && !returnUrl.startsWith('https://')) {
-        throw new Error('returnUrl debe ser HTTPS en producción');
-    }
 
     // Validar que empiece con http:// o https://
     if (!returnUrl.startsWith('http://') && !returnUrl.startsWith('https://')) {

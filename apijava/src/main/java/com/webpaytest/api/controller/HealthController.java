@@ -23,11 +23,10 @@ public class HealthController {
      * Response: 200 OK
      */
     @GetMapping("/health")
-    public ResponseEntity<ApiResponse<String>> health() {
-        ApiResponse<String> response = ApiResponse.success(
-                "API running",
-                "API está funcionando correctamente");
-
+    public ResponseEntity<java.util.Map<String, String>> health() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("status", "healthy");
+        response.put("environment", "aws-production");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

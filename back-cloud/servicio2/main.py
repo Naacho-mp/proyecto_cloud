@@ -27,8 +27,15 @@ app.include_router(api_usuarios, prefix="/api")
 app.include_router(api_conexion, prefix="/api")
 app.include_router(api_carrito, prefix="/api")
 
+# ...existing code...
+
 # 3. ADICIÓN: Endpoint exclusivo para el Health Check de AWS.
 # Esto responderá un HTTP 200 limpio ante una petición GET.
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "environment": "aws-production"}
+
+@app.get("/health")
+async def health_root():
+    return {"status": "healthy"}
+

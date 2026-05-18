@@ -167,7 +167,7 @@ export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUr
  * - Error 422: "Transaction already locked by another process"
  *
  * @param {string} token - Token retornado por Webpay en la URL
- * @returns {Object} - Datos de la transacción confirmada
+ * @returns {Object} - { success: true, data: {...} }
  * @throws {Error} Si el token es inválido o ya fue procesado
  */
 export const confirmarTransaccionPago = async (token) => {
@@ -218,7 +218,13 @@ export const confirmarTransaccionPago = async (token) => {
         }
 
         console.log('[API] ✅ Transacción confirmada:', result.data.status);
-        return result.data;
+
+        // Retornar con estructura que espera el componente
+        return {
+            success: true,
+            data: result.data,
+            message: result.message
+        };
 
     } catch (err) {
         console.error('[API] ❌ Error al confirmar:', err.message);

@@ -1,17 +1,15 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { confirmarTransaccionPago, pagarCarrito } from '../servicios/api';
+import { confirmarTransaccionPago } from '../servicios/api';
 
 const WebpayRetorno = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Flag para evitar procesar múltiples veces
   const yaProcessado = useRef(false);
 
   const procesarRetorno = useCallback(async () => {
     try {
-      // Obtener el token de la URL
       const tokenWs = searchParams.get('token_ws');
 
       console.log('[WebpayRetorno] Token recibido:', tokenWs);
@@ -32,31 +30,15 @@ const WebpayRetorno = () => {
         return;
       }
 
-      console.log('[WebpayRetorno] Transacción confirmada exitosamente');
+      console.log('[WebpayRetorno] ✅ Transacción confirmada exitosamente');
 
-      // Paso 2: Obtener datos del usuario
-      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+      // Guardar datos de la transacción en localStorage para ResultadoPago
+      localStorage.setItem('datoPago', JSON.stringify(responseConfirm.data));
 
-      if (!usuario.id) {
-        console.error('[WebpayRetorno] Usuario no encontrado');
-        mostrarError('Sesión expirada. Por favor, inicia sesión nuevamente.');
-        return;
-      }
+      // TODO: Aquí debería llamar a pagarCarrito() pero guardamos solo en localStorage por ahora
+      // El carrito ya está en localStorage desde CarritoLateral
 
-      // Paso 3: Guardar el pedido en la BD (FastAPI)
-      console.log('[WebpayRetorno] Guardando pedido para usuario:', usuario.id);
-      const responsePedido = await pagarCarrito(usuario.id);
-
-      if (!responsePedido.success) {
-        console.error('[WebpayRetorno] Error al guardar pedido:', responsePedido.detail);
-        mostrarError(responsePedido.detail || 'Error al guardar el pedido en la base de datos');
-        return;
-      }
-
-      console.log('[WebpayRetorno] Pedido guardado exitosamente');
-
-      // Todo exitoso - redirigir a página de éxito
-      localStorage.removeItem('carrito');
+      // Redirigir a página de éxito
       navigate('/pago-resultado?token_ws=' + tokenWs);
 
     } catch (error) {
@@ -70,7 +52,6 @@ const WebpayRetorno = () => {
   };
 
   useEffect(() => {
-    // Solo procesar una única vez
     if (yaProcessado.current) {
       console.log('[WebpayRetorno] Ya fue procesado, ignorando llamada duplicada');
       return;

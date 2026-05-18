@@ -4,14 +4,18 @@ const Carrito = ({ children }) => {
   const [carrito, setCarrito] = useState([])
 
   const agregarAlCarrito = (producto) => {
+    // Actualizar estado local (UI rápida)
     setCarrito((prev) => {
       const existente = prev.find((item) => item.id === producto.id)
-      if (existente) {
-        return prev.map((item) =>
-          item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
-        )
-      }
-      return [...prev, { ...producto, cantidad: 1 }]
+      const nuevoCarrito = existente
+        ? prev.map((item) =>
+            item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
+          )
+        : [...prev, { ...producto, cantidad: 1 }]
+
+      // Guardar en localStorage
+      localStorage.setItem('carrito', JSON.stringify(nuevoCarrito))
+      return nuevoCarrito
     })
   }
 
@@ -22,12 +26,16 @@ const Carrito = ({ children }) => {
     setCarrito((prev) => {
       const item = prev.find((item) => item.id === idNumber)
       if (!item) return prev
-      if (item.cantidad > 1) {
-        return prev.map((item) =>
-          item.id === idNumber ? { ...item, cantidad: item.cantidad - 1 } : item
-        )
-      }
-      return prev.filter((item) => item.id !== idNumber)
+
+      const nuevoCarrito = item.cantidad > 1
+        ? prev.map((item) =>
+            item.id === idNumber ? { ...item, cantidad: item.cantidad - 1 } : item
+          )
+        : prev.filter((item) => item.id !== idNumber)
+
+      // Guardar en localStorage
+      localStorage.setItem('carrito', JSON.stringify(nuevoCarrito))
+      return nuevoCarrito
     })
   }
 

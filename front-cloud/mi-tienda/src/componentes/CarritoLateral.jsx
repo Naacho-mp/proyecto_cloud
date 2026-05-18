@@ -40,6 +40,10 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       const sessionId = String(usuario.id);
       const returnUrl = `${window.location.origin}/webpay-retorno`;
 
+      // Guardar carrito en localStorage ANTES de ir a Webpay
+      localStorage.setItem('carrito', JSON.stringify(carrito));
+      console.log('[CarritoLateral] Carrito guardado en localStorage:', carrito);
+
       console.log('[CarritoLateral] Payload para Webpay:', {
         amount,
         buyOrder,

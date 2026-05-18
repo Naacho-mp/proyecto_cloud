@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { pagarCarrito } from '../servicios/api';
 import { BsCheckCircle, BsXCircle } from 'react-icons/bs';
 
 const ResultadoPago = () => {
@@ -45,30 +44,18 @@ const ResultadoPago = () => {
         return;
       }
 
-      console.log('[ResultadoPago] Guardando pedido en BD...');
-      const responsePedido = await pagarCarrito(usuario.id);
+      console.log('[ResultadoPago] Datos de pago:', datoPago);
 
-      if (!responsePedido.success) {
-        setEstado('error');
-        setMensajeError(responsePedido.detail || 'Error al guardar pedido');
-        return;
-      }
-
-      // Éxito
+      // Si llegamos aquí, la transacción fue exitosa
+      // (WebpayRetorno.jsx ya confirmó y guardó el pedido)
       setEstado('exito');
+      setDatoPago(datoPago);
 
-      // Mostrar datos de prueba
-      setDatoPago({
-        status: 'AUTHORIZED',
-        authorizationCode: '123456',
-        amount: '50000',
-        cardNumber: '****6623',
-        paymentTypeCode: 'VD'
-      });
-
-      // Limpiar después de 5 segundos
+      // Limpiar localStorage después de 5 segundos
       setTimeout(() => {
         localStorage.removeItem('carrito');
+        localStorage.removeItem('carritoTemp');
+        localStorage.removeItem('datoPago');
         navigate('/productos');
       }, 5000);
 

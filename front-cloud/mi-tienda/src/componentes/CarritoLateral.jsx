@@ -38,17 +38,8 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       const amount = Math.round(totalCarrito);
       const buyOrder = `ORD-${Date.now()}-${usuario.id}`;
       const sessionId = String(usuario.id);
-      // Construir returnUrl
-      // En desarrollo: usar http://localhost
-      // En producción: forzar https:// aunque sea HTTP internamente
-      let returnUrl = `${window.location.origin}/webpay-retorno`;
-
       // Si no es localhost y es HTTP, cambiar a HTTPS
-      if (!returnUrl.includes('localhost') && !returnUrl.includes('127.0.0.1')) {
-        if (returnUrl.startsWith('http://')) {
-          returnUrl = returnUrl.replace('http://', 'https://');
-        }
-      }
+        const returnUrl = `${window.location.origin}/webpay-retorno`;
 
       // Guardar carrito en localStorage ANTES de ir a Webpay
       localStorage.setItem('carrito', JSON.stringify(carrito));

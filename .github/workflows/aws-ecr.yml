@@ -23,6 +23,10 @@ jobs:
       - name: Login en AWS ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Instalar jq (para manipular JSON)
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      # -------------------- BUILD & PUSH --------------------
       - name: Build y push Frontend - React
         run: |
           docker build -t front-cloud ./front-cloud/mi-tienda
@@ -41,25 +45,48 @@ jobs:
           docker tag api-java:latest 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-java:latest
           docker push 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-java:latest
 
-      #-------------------- Despliegue con Force New Deployment ---------------------
-
-      - name: Actualizar Frontend en AWS ECS
+      # -------------------- DESHABILITAR HEALTH CHECKS Y DESPLEGAR --------------------
+      # Frontend
+      - name: Deshabilitar health check y actualizar Frontend
         run: |
-          aws ecs update-service \
-            --cluster proyecto-cloud \
-            --service td-frontend-service-k813gch9 \
-            --force-new-deployment
+          # Obtener el nombre de la familia de tarea actual del servicio
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-frontend-service-k813gch9 --query 'services[0].taskDefinition' --output text)
+          FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
+          
+          # Obtener la definición de tarea más reciente de esa familia
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          
+          # Eliminar los campos que no se pueden enviar al registrar una nueva tarea, y también eliminar healthCheck
+          NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
+          
+          # Registrar la nueva tarea sin health check
+          NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
+          
+          # Actualizar el servicio para usar la nueva tarea y forzar despliegue
+          aws ecs update-service --cluster proyecto-cloud --service td-frontend-service-k813gch9 --task-definition $NEW_REVISION_ARN --force-new-deployment
 
-      - name: Actualizar Backend en AWS ECS
+      # Backend
+      - name: Deshabilitar health check y actualizar Backend
         run: |
-          aws ecs update-service \
-            --cluster proyecto-cloud \
-            --service td-backend-service-rszdm4ad \
-            --force-new-deployment
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-backend-service-rszdm4ad --query 'services[0].taskDefinition' --output text)
+          FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
+          
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
+          
+          NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
+          
+          aws ecs update-service --cluster proyecto-cloud --service td-backend-service-rszdm4ad --task-definition $NEW_REVISION_ARN --force-new-deployment
 
-      - name: Actualizar Api Pagos en AWS ECS
+      # Api Pagos (Java)
+      - name: Deshabilitar health check y actualizar Api Pagos
         run: |
-          aws ecs update-service \
-            --cluster proyecto-cloud \
-            --service td-java-service-h2pngiik \
-            --force-new-deployment
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-java-service-h2pngiik --query 'services[0].taskDefinition' --output text)
+          FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
+          
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
+          
+          NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
+          
+          aws ecs update-service --cluster proyecto-cloud --service td-java-service-h2pngiik --task-definition $NEW_REVISION_ARN --force-new-deployment

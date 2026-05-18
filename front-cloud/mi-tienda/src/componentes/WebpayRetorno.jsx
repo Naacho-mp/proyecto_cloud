@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { confirmarTransaccionPago, pagarCarrito } from '../servicios/api';
 
@@ -6,15 +6,12 @@ const WebpayRetorno = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  useEffect(() => {
-    procesarRetorno();
-  }, []);
+  // Flag para evitar procesar múltiples veces
+  const yaProcessado = useRef(false);
 
-  const procesarRetorno = async () => {
+  const procesarRetorno = useCallback(async () => {
     try {
-      // Obtener el token de la URL (Transbank lo envía en la redirección POST)
-      // El token viene en los datos del POST que Transbank envía al returnUrl
-      // Pero como es un navegador, llega como parámetro query
+      // Obtener el token de la URL
       const tokenWs = searchParams.get('token_ws');
 
       console.log('[WebpayRetorno] Token recibido:', tokenWs);
@@ -66,11 +63,22 @@ const WebpayRetorno = () => {
       console.error('[WebpayRetorno] Error inesperado:', error);
       mostrarError(error.message || 'Error desconocido al procesar el pago');
     }
-  };
+  }, [searchParams, navigate]);
 
   const mostrarError = (mensaje) => {
     navigate('/pago-resultado?error=' + encodeURIComponent(mensaje));
   };
+
+  useEffect(() => {
+    // Solo procesar una única vez
+    if (yaProcessado.current) {
+      console.log('[WebpayRetorno] Ya fue procesado, ignorando llamada duplicada');
+      return;
+    }
+
+    procesarRetorno();
+    yaProcessado.current = true;
+  }, [procesarRetorno]);
 
   return (
     <div style={{ textAlign: 'center', padding: '50px' }}>

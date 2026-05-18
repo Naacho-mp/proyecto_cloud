@@ -14,68 +14,73 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       setCargando(true);
       setError('');
 
+      // 1. Validar usuario
       const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-
       if (!usuario.id) {
         setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
         return;
       }
 
+      // 2. Validar carrito
       if (carrito.length === 0) {
         setError('Tu carrito está vacío.');
         return;
       }
 
-      if (total <= 0) {
+      // 3. Calcular y validar total
+      const totalCarrito = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+      if (totalCarrito <= 0) {
         setError('El total del carrito no es válido.');
         return;
       }
 
+      // 4. Construir payload exacto para Webpay
+      const amount = Math.round(totalCarrito);
       const buyOrder = `ORD-${Date.now()}-${usuario.id}`;
+      const sessionId = String(usuario.id);
       const returnUrl = `${window.location.origin}/webpay-retorno`;
 
-      const response = await crearTransaccionPago(
-        Math.round(total),
+      console.log('[CarritoLateral] Payload para Webpay:', {
+        amount,
         buyOrder,
-        String(usuario.id),
+        sessionId,
+        returnUrl
+      });
+
+      // 5. Crear transacción (con validaciones internas)
+      const paymentData = await crearTransaccionPago(
+        amount,
+        buyOrder,
+        sessionId,
         returnUrl
       );
 
-      if (!response.success) {
-        setError(response.message || 'Error al crear la transacción de pago');
+      // 6. Extraer token y URL
+      const { url: paymentUrl, token } = paymentData;
+
+      if (!paymentUrl || !token) {
+        setError('Respuesta inválida del servidor: falta token o URL');
         return;
       }
 
-      const { url: paymentUrl, token } = response.data;
+      // 7. Crear formulario HTML POST para Transbank
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = paymentUrl;
 
-      if (paymentUrl && token) {
-        // ⚠️ IMPORTANTE: Transbank REQUIERE un POST tradicional con formulario HTML
-        // No podemos usar fetch() o axios() porque Transbank espera específicamente
-        // un formulario HTML que simule un submit de forma convencional
+      const tokenInput = document.createElement('input');
+      tokenInput.type = 'hidden';
+      tokenInput.name = 'token_ws';
+      tokenInput.value = token;
 
-        // Crear un formulario oculto que Transbank espera
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = paymentUrl;
+      form.appendChild(tokenInput);
+      document.body.appendChild(form);
 
-        // Agregar el token como campo oculto
-        const tokenInput = document.createElement('input');
-        tokenInput.type = 'hidden';
-        tokenInput.name = 'token_ws';
-        tokenInput.value = token;
-
-        form.appendChild(tokenInput);
-        document.body.appendChild(form);
-
-        console.log('[CarritoLateral] Enviando formulario POST a Transbank:', paymentUrl);
-
-        // Hacer submit del formulario (esto es lo que Transbank espera)
-        form.submit();
-      } else {
-        setError('No se recibió URL o token de pago válidos');
-      }
+      console.log('[CarritoLateral] ✅ Redirigiendo a Transbank:', paymentUrl);
+      form.submit();
 
     } catch (err) {
+      console.error('[CarritoLateral] ❌ Error:', err.message);
       setError(err.message || 'Error desconocido al procesar el pago');
     } finally {
       setCargando(false);

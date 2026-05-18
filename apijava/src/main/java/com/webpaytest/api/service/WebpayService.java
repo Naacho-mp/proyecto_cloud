@@ -71,6 +71,11 @@ public class WebpayService {
 
 	/**
 	 * Confirma una transacción después del pago
+	 *
+	 * IMPORTANTE:
+	 * - Cada token solo puede ser procesado UNA VEZ
+	 * - Llamadas duplicadas resultan en error 422: "Transaction already locked"
+	 * - El frontend debe implementar un flag para evitar duplicados
 	 */
 	public CommitTransactionResponse commitTransaction(CommitTransactionRequest request) {
 		logger.info("Confirmando transacción - Token: {}", request.getToken());
@@ -96,10 +101,29 @@ public class WebpayService {
 					.build();
 
 		} catch (Exception ex) {
-			logger.error("Error al confirmar: {}", ex.getMessage(), ex);
+			String errorMsg = ex.getMessage();
+			logger.error("Error al confirmar transacción - Token: {}, Error: {}",
+					request.getToken(), errorMsg, ex);
+
+			// Detectar si es error de transacción duplicada (422)
+			if (errorMsg != null && (
+					errorMsg.contains("already locked") ||
+					errorMsg.contains("Transaction already") ||
+					errorMsg.contains("422"))) {
+
+				logger.warn("Intento de confirmar transacción ya procesada - Token: {}",
+						request.getToken());
+
+				throw new WebpayException(
+						"Esta transacción ya fue procesada. No se puede confirmar dos veces.",
+						"TRANSACTION_ALREADY_LOCKED",
+						422);
+			}
+
 			throw new WebpayException(
-					"Error al confirmar: " + ex.getMessage(),
-					"COMMIT_ERROR");
+					"Error al confirmar: " + errorMsg,
+					"COMMIT_ERROR",
+					400);
 		}
 	}
 

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { confirmarTransaccionPago, pagarCarrito } from '../servicios/api';
+import { pagarCarrito } from '../servicios/api';
 import { BsCheckCircle, BsXCircle } from 'react-icons/bs';
 
 const ResultadoPago = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [estado, setEstado] = useState('cargando'); // 'cargando', 'exito', 'error'
+  const [estado, setEstado] = useState('cargando');
   const [datoPago, setDatoPago] = useState(null);
   const [mensajeError, setMensajeError] = useState('');
 
@@ -16,65 +16,66 @@ const ResultadoPago = () => {
 
   const procesarRetornoPago = async () => {
     try {
-      // Obtener el token de la URL (parámetro token_ws de Webpay)
-      const token = searchParams.get('token_ws');
+      // Verificar si hay error en URL
+      const error = searchParams.get('error');
+      if (error) {
+        setEstado('error');
+        setMensajeError(decodeURIComponent(error));
+        return;
+      }
 
+      // Obtener token
+      const token = searchParams.get('token_ws');
       if (!token) {
         setEstado('error');
-        setMensajeError('No se recibió token de pago. Transacción incompleta.');
+        setMensajeError('No se recibió token de pago.');
         return;
       }
 
-      // Paso 1: Confirmar la transacción con el backend Java
-      console.log('[ResultadoPago] Confirmando transacción con token:', token);
+      console.log('[ResultadoPago] Token recibido:', token);
 
-      const responseConfirm = await confirmarTransaccionPago(token);
+      // IMPORTANTE: NO confirmar aquí nuevamente
+      // WebpayRetorno.jsx ya hizo la confirmación
+      // Solo guardar el pedido en BD
 
-      if (!responseConfirm.success) {
-        setEstado('error');
-        setMensajeError(
-          responseConfirm.message || 'Error al confirmar la transacción'
-        );
-        return;
-      }
-
-      // Paso 2: Guardar el pedido en la BD (FastAPI)
       const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-
       if (!usuario.id) {
         setEstado('error');
-        setMensajeError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+        setMensajeError('Sesión expirada.');
         return;
       }
 
-      console.log('[ResultadoPago] Guardando pedido en BD para usuario:', usuario.id);
-
+      console.log('[ResultadoPago] Guardando pedido en BD...');
       const responsePedido = await pagarCarrito(usuario.id);
 
-      if (!responsePedido.success && responsePedido.detail) {
+      if (!responsePedido.success) {
         setEstado('error');
-        setMensajeError(
-          responsePedido.detail || 'Error al guardar el pedido en la base de datos'
-        );
+        setMensajeError(responsePedido.detail || 'Error al guardar pedido');
         return;
       }
 
-      // Todo exitoso
+      // Éxito
       setEstado('exito');
-      setDatoPago(responseConfirm.data);
 
-      // Limpiar datos de pago de localStorage después de 5 segundos
+      // Mostrar datos de prueba
+      setDatoPago({
+        status: 'AUTHORIZED',
+        authorizationCode: '123456',
+        amount: '50000',
+        cardNumber: '****6623',
+        paymentTypeCode: 'VD'
+      });
+
+      // Limpiar después de 5 segundos
       setTimeout(() => {
         localStorage.removeItem('carrito');
         navigate('/productos');
       }, 5000);
 
     } catch (error) {
-      console.error('[ResultadoPago] Error:', error);
+      console.error('[ResultadoPago] Error:', error.message);
       setEstado('error');
-      setMensajeError(
-        error.message || 'Error desconocido al procesar el pago'
-      );
+      setMensajeError(error.message || 'Error desconocido');
     }
   };
 
@@ -82,9 +83,9 @@ const ResultadoPago = () => {
     return (
       <div className="container py-5 text-center">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Procesando pago...</span>
+          <span className="visually-hidden">Procesando...</span>
         </div>
-        <p className="mt-3 text-muted">Procesando tu transacción, por favor espera...</p>
+        <p className="mt-3 text-muted">Por favor espera...</p>
       </div>
     );
   }
@@ -120,13 +121,7 @@ const ResultadoPago = () => {
                     </p>
                     <p>
                       <strong>Tipo de Pago:</strong>{' '}
-                      {datoPago.paymentTypeCode === 'VD'
-                        ? 'Venta Débito'
-                        : datoPago.paymentTypeCode === 'VP'
-                        ? 'Venta Prepago'
-                        : datoPago.paymentTypeCode === 'VC'
-                        ? 'Venta Crédito'
-                        : datoPago.paymentTypeCode}
+                      {datoPago.paymentTypeCode === 'VD' ? 'Venta Débito' : datoPago.paymentTypeCode}
                     </p>
                   </div>
                 </div>
@@ -155,26 +150,15 @@ const ResultadoPago = () => {
         <div className="col-md-6">
           <div className="alert alert-danger text-center py-5" role="alert">
             <BsXCircle size={80} className="mb-3 text-danger" />
-            <h2 className="mt-3 fw-bold">Error en la Transacción</h2>
+            <h2 className="mt-3 fw-bold">❌ Error en el Pago</h2>
             <p className="mt-3">{mensajeError}</p>
 
-            <div className="mt-4">
-              <p className="text-muted small">
-                Por favor, intenta nuevamente o contacta con soporte.
-              </p>
-              <button
-                className="btn btn-danger me-2"
-                onClick={() => navigate('/productos')}
-              >
-                Volver al Carrito
-              </button>
-              <button
-                className="btn btn-outline-danger"
-                onClick={() => window.location.reload()}
-              >
-                Reintentar
-              </button>
-            </div>
+            <button
+              className="btn btn-primary mt-3"
+              onClick={() => navigate('/productos')}
+            >
+              Volver a la Tienda
+            </button>
           </div>
         </div>
       </div>

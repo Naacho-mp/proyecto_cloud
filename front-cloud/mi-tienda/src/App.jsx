@@ -4,6 +4,8 @@ import { Navbar } from './componentes/Navbar'
 import { CarritoLateral } from './componentes/CarritoLateral'
 import Login from './componentes/Login'
 import Home from './componentes/Home'
+import ResultadoPago from './componentes/ResultadoPago'
+import WebpayRetorno from './componentes/WebpayRetorno'
 import { Routes, Route, Navigate } from 'react-router-dom'
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
               <CarritoLateral carrito={carrito} eliminarDelCarrito={eliminarDelCarrito} />
             </>
           } />
+          <Route path="/webpay-retorno" element={<WebpayRetorno />} />
+          <Route path="/pago-resultado" element={<ResultadoPago />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       )}

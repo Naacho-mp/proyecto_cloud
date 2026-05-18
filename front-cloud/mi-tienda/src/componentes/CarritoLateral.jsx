@@ -1,9 +1,66 @@
-import React from 'react';
+import { useState } from 'react';
 import { BsTrash } from 'react-icons/bs';
 import { BsCreditCard2Back } from "react-icons/bs";
+import { crearTransaccionPago } from '../servicios/api';
 
 export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) => {
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState('');
+
   const total = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
+
+  const handleIrAPagar = async () => {
+    try {
+      setCargando(true);
+      setError('');
+
+      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+
+      if (!usuario.id) {
+        setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+        return;
+      }
+
+      if (carrito.length === 0) {
+        setError('Tu carrito está vacío.');
+        return;
+      }
+
+      if (total <= 0) {
+        setError('El total del carrito no es válido.');
+        return;
+      }
+
+      const buyOrder = `ORD-${Date.now()}-${usuario.id}`;
+      const returnUrl = `${window.location.origin}/webpay-retorno`;
+
+      const response = await crearTransaccionPago(
+        Math.round(total),
+        buyOrder,
+        String(usuario.id),
+        returnUrl
+      );
+
+      if (!response.success) {
+        setError(response.message || 'Error al crear la transacción de pago');
+        return;
+      }
+
+      const paymentUrl = response.data.url;
+
+      if (paymentUrl) {
+        // eslint-disable-next-line no-undef
+        top.location.href = paymentUrl;
+      } else {
+        setError('No se recibió URL de pago válida');
+      }
+
+    } catch (err) {
+      setError(err.message || 'Error desconocido al procesar el pago');
+    } finally {
+      setCargando(false);
+    }
+  };
 
   return (
     <div 
@@ -25,6 +82,18 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       </div>
       
       <div className="offcanvas-body">
+        {error && (
+          <div className="alert alert-danger alert-dismissible fade show" role="alert">
+            {error}
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setError('')}
+              aria-label="Close"
+            ></button>
+          </div>
+        )}
+
         {carrito.length === 0 ? (
           <p className="text-muted text-center py-5">Tu carrito está vacío.</p>
         ) : (
@@ -43,6 +112,7 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
                       className="btn btn-sm btn-outline-danger mb-2"
                       onClick={() => eliminarDelCarrito(item.id)}
                       aria-label={`Eliminar ${item.nombre}`}
+                      disabled={cargando}
                     >
                       <BsTrash />
                     </button>
@@ -67,10 +137,20 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
         <button 
           className="btn btn-dark w-100 py-2 fw-bold" 
           style={{ borderRadius: '10px' }}
-          disabled={carrito.length === 0}
+          disabled={carrito.length === 0 || cargando}
+          onClick={handleIrAPagar}
         >
-          Ir a Pagar
-          <BsCreditCard2Back className="ms-2" />
+          {cargando ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Procesando...
+            </>
+          ) : (
+            <>
+              Ir a Pagar
+              <BsCreditCard2Back className="ms-2" />
+            </>
+          )}
         </button>
       </div>
     </div>

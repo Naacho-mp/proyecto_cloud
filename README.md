@@ -3,9 +3,25 @@
 Este proyecto consiste en una arquitectura de microservicios diseñada para ser desplegada en AWS mediante un Application Load Balancer (ALB). El sistema integra un frontend en React, un backend central en FastAPI y un servicio dedicado en Spring Boot (Java).
 
 ## Entorno de Producción (AWS)
+El proyecto está configurado para levantarse completamente de forma centralizada desde la raíz usando un único `docker-compose.yml`. Esto asegura que:
 
-Todo el tráfico de producción está centralizado a través de nuestro balanceador de carga en AWS. Las peticiones se enrutan automáticamente al contenedor correspondiente según el prefijo de la URL.
+- Todos los servicios (Frontend, Backend FastAPI, Java) estén en la misma red virtual
+- Las variables de entorno de BD se carguen automáticamente
+- Los servicios puedan comunicarse entre sí por nombre de servicio
+- La arquitectura sea idéntica a la de producción
 
+**Levantamiento inicial (construcción de imágenes):**
+
+```bash
+cd /Users/andresbluna/development/proyecto_cloud
+docker compose up -d --build
+```
+
+**Levantamiento posterior (sin reconstruir):**
+
+```bash
+docker compose up -d
+```
 * **URL Base (ALB):** [http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com](http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com)
 
 ---
@@ -22,18 +38,26 @@ Gestiona la lógica de negocio, usuarios, productos y base de datos.
 | --- | --- | --- | --- |
 | **Usuarios** | POST | /api/usuarios/registro | Registra un nuevo usuario (hash bcrypt). |
 |  | POST | /api/usuarios/login | Autentica un usuario. |
-| **Productos** | GET | /api/productos/ | Lista todos los productos disponibles. |
+### 3. Aplicación de Cambios (Build)
 | **Carrito** | POST | /api/carrito/agregar | Añade un producto al carrito. |
 |  | GET | /api/carrito/{usuario_id} | Obtiene el carrito de un usuario. |
 |  | DELETE | /api/carrito/reducir/{item_id} | Reduce en 1 la cantidad de un ítem. |
 |  | DELETE | /api/carrito/eliminar/{item_id} | Elimina por completo un ítem del carrito. |
+# Reconstruir todos los servicios
 |  | DELETE | /api/carrito/vaciar/{usuario_id} | Vacía todo el carrito de un usuario. |
 |  | POST | /api/carrito/pagar/{usuario_id} | Procesa el pedido validando stock. |
+# O reconstruir un servicio específico
+docker compose up -d --build api-fastapi
+docker compose up -d --build api-webpay
+docker compose up -d --build frontend
 | **Conexión** | GET | /api/conect/conexion | Verifica estado y versión de la BD (RDS). |
 |  | GET | /api/conect/tablas | Lista las tablas de la base de datos tienda. |
-
+**Nombres de servicios disponibles:**
+- `api-fastapi` - Backend Python/FastAPI
+- `api-webpay` - Backend Java/Spring Boot
+- `frontend` - Frontend React
 ### Servicio de Java (Java / Spring Boot) - Prefijo: /java
-
+### 4. Monitoreo de Conexiones y Debugging
 Microservicio dedicado exclusivamente a la integración con el servicio de Java.
 
 | Método | Endpoint (Producción) | Descripción |
@@ -41,9 +65,22 @@ Microservicio dedicado exclusivamente a la integración con el servicio de Java.
 | POST | /java/create | Crea un nuevo pedido. |
 | POST | /java/commit | Confirma un pedido post-redirección. |
 | POST | /java/status | Consulta el estado actual de un pedido. |
-| POST | /java/refund | Reembolsa o anula un pedido existente. |
+# Ver los logs de un servicio específico
+docker compose logs -f api-fastapi
+docker compose logs -f api-webpay
+docker compose logs -f frontend
+```
 
+**Para validar la conexión a la BD desde el contenedor FastAPI:**
 ---
+```bash
+# Acceder al contenedor de FastAPI
+docker compose exec api-fastapi /bin/bash
+
+# Verificar que las variables de entorno están cargadas
+echo $DB_SERVER
+echo $DB_USERNAME
+echo $DB_DATABASE
 
 ## Estado Actual del Proyecto y To-Do
 

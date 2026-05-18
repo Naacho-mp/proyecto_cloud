@@ -1,5 +1,8 @@
-// Agrega el http:// al principio de la URL
-const BASE_URL = "/api"// Productos
+// API Backend FastAPI
+const BASE_URL = "http://localhost:8000/api"
+
+// Java Webpay Backend
+const WEBPAY_URL = "http://localhost:8080/java"
 
 
 export const getProductos = async () => {
@@ -47,3 +50,78 @@ export const pagarCarrito = async (usuario_id) => {
     })
     return response.json()
 }
+
+// ============================================================
+// INTEGRACIÓN CON API DE PAGO (Java Webpay)
+// ============================================================
+
+/**
+ * Paso 1: Crear transacción de pago
+ * Se llama cuando el usuario hace click en "Pagar"
+ *
+ * @param {number} amount - Monto a pagar en CLP
+ * @param {string} buyOrder - Número de orden (ej: "ORD-001")
+ * @param {string} sessionId - ID de la sesión del usuario
+ * @param {string} returnUrl - URL a donde retornar después del pago
+ * @returns {Object} - Contiene el token y URL de Webpay
+ */
+export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUrl) => {
+    const response = await fetch(`${WEBPAY_URL}/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            amount,
+            buyOrder,
+            sessionId,
+            returnUrl
+        })
+    })
+    return response.json()
+}
+
+/**
+ * Paso 2: Confirmar transacción después de retorno de Webpay
+ * Se llama cuando el usuario retorna de Webpay con el token en la URL
+ *
+ * @param {string} token - Token retornado por Webpay en la URL
+ * @returns {Object} - Datos de la transacción confirmada
+ */
+export const confirmarTransaccionPago = async (token) => {
+    const response = await fetch(`${WEBPAY_URL}/commit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+    })
+    return response.json()
+}
+
+/**
+ * Consultar estado de una transacción
+ *
+ * @param {string} token - Token de la transacción
+ * @returns {Object} - Estado actual de la transacción
+ */
+export const consultarEstadoPago = async (token) => {
+    const response = await fetch(`${WEBPAY_URL}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+    })
+    return response.json()
+}
+
+/**
+ * Reembolsar transacción
+ *
+ * @param {string} token - Token de la transacción a reembolsar
+ * @returns {Object} - Datos del reembolso
+ */
+export const reembolsarPago = async (token) => {
+    const response = await fetch(`${WEBPAY_URL}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+    })
+    return response.json()
+}
+

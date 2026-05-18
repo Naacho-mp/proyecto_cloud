@@ -96,10 +96,17 @@ export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUr
         throw new Error('returnUrl es requerido');
     }
 
-
     // Validar que empiece con http:// o https://
     if (!returnUrl.startsWith('http://') && !returnUrl.startsWith('https://')) {
         throw new Error('returnUrl debe empezar con http:// o https://');
+    }
+
+    // Advertencia: Webpay requiere HTTPS en producción
+    if (!returnUrl.includes('localhost') && !returnUrl.includes('127.0.0.1')) {
+        if (returnUrl.startsWith('http://')) {
+            console.warn('[API] Advertencia: returnUrl usa HTTP en producción. Webpay puede rechazarlo.');
+            console.warn('[API] Se espera que el frontend la cambie a HTTPS automaticamente.');
+        }
     }
 
     if (returnUrl.length > 256) {

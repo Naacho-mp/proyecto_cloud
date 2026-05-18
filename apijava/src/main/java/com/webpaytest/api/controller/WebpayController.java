@@ -5,11 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping; // Añadido para soportar el Health Check
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import com.webpaytest.api.dto.ApiResponse;
 import com.webpaytest.api.dto.CreateTransactionRequest;
@@ -37,6 +33,7 @@ import java.util.Map;     // Añadido para estructurar la respuesta limpia
  * Todos los endpoints validan las requests y retornan
  * respuestas JSON consistentes.
  */
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/java")
 @Validated

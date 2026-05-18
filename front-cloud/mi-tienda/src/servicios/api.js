@@ -1,11 +1,11 @@
 // Detectar ambiente
 const isDevelopment = import.meta.env.DEV;
 
-// En desarrollo: localhost
-// En producción (AWS ECS): ALB DNS
-const ALB_URL = "balanceador-carga-1567813537.us-east-1.elb.amazonaws.com";
-const BASE_URL = isDevelopment ? "http://localhost:8000/api" : `http://${ALB_URL}/api`;
-const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : `http://${ALB_URL}/java`;
+// URLs de API
+// En desarrollo: puede usar localhost directamente para testing rápido
+// En producción: SIEMPRE usa rutas relativas porque Nginx hace proxy interno
+const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
+const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "/java";
 
 
 export const getProductos = async () => {

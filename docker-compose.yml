@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   # Backend FastAPI
-  api-fastapi:
+  td-backend:
     build:
       context: ./back-cloud/servicio2
     container_name: servicio_fastapi
@@ -27,7 +27,7 @@ services:
       start_period: 10s
 
   # Servicio Java Webpay
-  api-webpay:
+  td-java:
     build:
       context: ./apijava
       dockerfile: Dockerfile
@@ -40,7 +40,7 @@ services:
     networks:
       - microservices-network
     depends_on:
-      api-fastapi:
+      td-backend:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/java/health"]
@@ -50,7 +50,7 @@ services:
       start_period: 15s
 
   # Frontend React (Nginx proxy)
-  frontend:
+  td-frontend:
     build:
       context: ./front-cloud/mi-tienda
       dockerfile: Dockerfile
@@ -61,8 +61,8 @@ services:
     networks:
       - microservices-network
     depends_on:
-      - api-fastapi
-      - api-webpay
+      - td-backend
+      - td-java
 
 networks:
   microservices-network:

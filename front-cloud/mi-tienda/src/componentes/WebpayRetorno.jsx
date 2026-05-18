@@ -1,84 +1,75 @@
 import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { confirmarTransaccionPago, pagarCarrito } from '../servicios/api';
 
 const WebpayRetorno = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   useEffect(() => {
     procesarRetorno();
   }, []);
 
   const procesarRetorno = async () => {
     try {
-      // El token viene en los datos del formulario de Webpay
-      // Necesitamos extraerlo de forma diferente según cómo lo envíe
+      // Obtener el token de la URL (Transbank lo envía en la redirección POST)
+      // El token viene en los datos del POST que Transbank envía al returnUrl
+      // Pero como es un navegador, llega como parámetro query
+      const tokenWs = searchParams.get('token_ws');
 
-      // Método 1: Ver si está en la URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenUrl = urlParams.get('token_ws');
+      console.log('[WebpayRetorno] Token recibido:', tokenWs);
 
-      // Método 2: Ver si está en el body (POST)
-      // En este caso, Webpay hace un POST con token_ws
-
-      if (tokenUrl) {
-        console.log('Token desde URL:', tokenUrl);
-        await confirmarPago(tokenUrl);
-      } else {
-        // Intentar obtener del formulario oculto que dejó Webpay
-        const formas = document.querySelectorAll('form');
-        console.log('Formas encontradas:', formas.length);
-
-        if (formas.length > 0) {
-          // Buscar el campo token_ws en los formularios
-          const tokenInput = document.querySelector('input[name="token_ws"]');
-          if (tokenInput) {
-            console.log('Token desde form:', tokenInput.value);
-            await confirmarPago(tokenInput.value);
-          }
-        } else {
-          // Fallback: mostrar error
-          mostrarError('No se encontró token de pago');
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      mostrarError(error.message);
-    }
-  };
-
-  const confirmarPago = async (token) => {
-    try {
-      // Confirmar con backend Java
-      const responseConfirm = await confirmarTransaccionPago(token);
-
-      if (!responseConfirm.success) {
-        mostrarError(responseConfirm.message || 'Error al confirmar pago');
+      if (!tokenWs) {
+        console.error('[WebpayRetorno] No se encontró token_ws en URL');
+        mostrarError('No se recibió token de Transbank. Por favor, intenta nuevamente.');
         return;
       }
 
-      // Guardar pedido en BD
+      // Paso 1: Confirmar la transacción con el backend Java
+      console.log('[WebpayRetorno] Confirmando transacción...');
+      const responseConfirm = await confirmarTransaccionPago(tokenWs);
+
+      if (!responseConfirm.success) {
+        console.error('[WebpayRetorno] Error al confirmar:', responseConfirm.message);
+        mostrarError(responseConfirm.message || 'Error al confirmar la transacción');
+        return;
+      }
+
+      console.log('[WebpayRetorno] Transacción confirmada exitosamente');
+
+      // Paso 2: Obtener datos del usuario
       const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
       if (!usuario.id) {
-        mostrarError('Sesión expirada');
+        console.error('[WebpayRetorno] Usuario no encontrado');
+        mostrarError('Sesión expirada. Por favor, inicia sesión nuevamente.');
         return;
       }
 
+      // Paso 3: Guardar el pedido en la BD (FastAPI)
+      console.log('[WebpayRetorno] Guardando pedido para usuario:', usuario.id);
       const responsePedido = await pagarCarrito(usuario.id);
 
-      if (responsePedido.success) {
-        // Éxito
-        localStorage.removeItem('carrito');
-        window.location.href = '/pago-resultado?exito=true&token=' + token;
-      } else {
-        mostrarError('Error al guardar pedido');
+      if (!responsePedido.success) {
+        console.error('[WebpayRetorno] Error al guardar pedido:', responsePedido.detail);
+        mostrarError(responsePedido.detail || 'Error al guardar el pedido en la base de datos');
+        return;
       }
+
+      console.log('[WebpayRetorno] Pedido guardado exitosamente');
+
+      // Todo exitoso - redirigir a página de éxito
+      localStorage.removeItem('carrito');
+      navigate('/pago-resultado?token_ws=' + tokenWs);
+
     } catch (error) {
-      console.error('Error:', error);
-      mostrarError(error.message);
+      console.error('[WebpayRetorno] Error inesperado:', error);
+      mostrarError(error.message || 'Error desconocido al procesar el pago');
     }
   };
 
   const mostrarError = (mensaje) => {
-    window.location.href = `/pago-resultado?error=${encodeURIComponent(mensaje)}`;
+    navigate('/pago-resultado?error=' + encodeURIComponent(mensaje));
   };
 
   return (

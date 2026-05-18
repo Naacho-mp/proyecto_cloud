@@ -46,13 +46,33 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
         return;
       }
 
-      const paymentUrl = response.data.url;
+      const { url: paymentUrl, token } = response.data;
 
-      if (paymentUrl) {
-        // eslint-disable-next-line no-undef
-        top.location.href = paymentUrl;
+      if (paymentUrl && token) {
+        // ⚠️ IMPORTANTE: Transbank REQUIERE un POST tradicional con formulario HTML
+        // No podemos usar fetch() o axios() porque Transbank espera específicamente
+        // un formulario HTML que simule un submit de forma convencional
+
+        // Crear un formulario oculto que Transbank espera
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = paymentUrl;
+
+        // Agregar el token como campo oculto
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = 'token_ws';
+        tokenInput.value = token;
+
+        form.appendChild(tokenInput);
+        document.body.appendChild(form);
+
+        console.log('[CarritoLateral] Enviando formulario POST a Transbank:', paymentUrl);
+
+        // Hacer submit del formulario (esto es lo que Transbank espera)
+        form.submit();
       } else {
-        setError('No se recibió URL de pago válida');
+        setError('No se recibió URL o token de pago válidos');
       }
 
     } catch (err) {

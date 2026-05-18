@@ -1,6 +1,17 @@
 [
-  {"id": 1, "nombre": "Jockey UCM", "precio": 14990, "imagen": "jockey.png"},
-  {"id": 2, "nombre": "Mochila UCM 26 Lts", "precio": 19990, "imagen": "mochila.png"},
-  {"id": 3, "nombre": "Polera UCM Unisex", "precio": 12990, "imagen": "polera.png"},
-  {"id": 4, "nombre": "Tazón UCM", "precio": 9990, "imagen": "tazon.png"}
+  {"id": 1, "nombre": "Agenda", "precio": 2500, "imagen": "agenda.png"},
+  {"id": 2, "nombre": "Bolsa", "precio": 3200, "imagen": "bolsa.png"},
+  {"id": 3, "nombre": "Bolso", "precio": 4500, "imagen": "bolso.png"},
+  {"id": 4, "nombre": "Botella", "precio": 3800, "imagen": "botella.png"},
+  {"id": 5, "nombre": "Calendario", "precio": 2800, "imagen": "calendario.png"},
+  {"id": 6, "nombre": "Jockey", "precio": 5990, "imagen": "jockey.png"},
+  {"id": 7, "nombre": "Lanyer", "precio": 2500, "imagen": "lanyer.png"},
+  {"id": 8, "nombre": "Lapicero", "precio": 2700, "imagen": "lapicero.png"},
+  {"id": 9, "nombre": "Libreta", "precio": 3500, "imagen": "libreta.png"},
+  {"id": 10, "nombre": "Libreta con Divisor", "precio": 4200, "imagen": "libretacondivisor.png"},
+  {"id": 11, "nombre": "Libro", "precio": 6500, "imagen": "libro.png"},
+  {"id": 12, "nombre": "Llavero", "precio": 2900, "imagen": "llavero.png"},
+  {"id": 13, "nombre": "Mug", "precio": 5200, "imagen": "mug.png"},
+  {"id": 14, "nombre": "Pendrive", "precio": 7990, "imagen": "pendrive.png"},
+  {"id": 15, "nombre": "Tazón", "precio": 4800, "imagen": "tazon.png"}
 ]

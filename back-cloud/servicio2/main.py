@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from api.api_productos import api_productos
 from api.api_usuarios import api_usuarios
 from api.api_base_datos import api_conexion
@@ -10,6 +12,11 @@ from api.api_carrito import api_carrito
 app = FastAPI()
 
 print("Backend inicializado con configuración de rutas fijas para AWS")
+
+# Configurar carpeta estática para imágenes de productos
+images_dir = Path(__file__).parent / "public" / "products"
+images_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/api/images", StaticFiles(directory=str(images_dir)), name="images")
 
 app.add_middleware(
     CORSMiddleware,

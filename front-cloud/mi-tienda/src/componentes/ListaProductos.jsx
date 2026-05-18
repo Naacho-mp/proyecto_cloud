@@ -1,19 +1,7 @@
-import React from 'react'
-import { BsCartPlus } from "react-icons/bs";
-import jockey from '../assets/imagenes/jockey.png';
-import mochila from '../assets/imagenes/mochila.png';
-import polera from '../assets/imagenes/polera.png';
-import tazon from '../assets/imagenes/tazon.png';
+import { BsCartPlus, BsShop } from "react-icons/bs";
 
-export const ListaProductos = ({ productos = [], agregarAlCarrito }) => {
+export const ListaProductos = ({ productos = [], agregarAlCarrito, comprarAhora }) => {
 
-const imagenes = {
-    1: jockey,
-    2: mochila,
-    3: polera,
-    4: tazon
-  };
-  
   const formatCLP = (valor) => 
     new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(valor);
 
@@ -25,7 +13,7 @@ const imagenes = {
             <div className="card h-100 shadow-sm border-0 carta-hover">
               <div className="position-relative bg-light text-center p-3">
                 <img
-                  src = {imagenes[producto.id]}
+                  src={`/products/${producto.imagen}`}
                   className="img-fluid"
                   alt={producto.nombre}
                   style={{ height: '150px', objectFit: 'contain' }}/>
@@ -39,12 +27,20 @@ const imagenes = {
                     <strong>{formatCLP(producto.precio)}</strong>
                   </p>
                   
-                  <button
-                    className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
-                    onClick={() => agregarAlCarrito(producto)} 
-                  >
-                    Agregar <BsCartPlus />
-                  </button>
+                  <div className="d-grid gap-2">
+                    <button
+                      className="btn btn-primary d-flex align-items-center justify-content-center gap-2"
+                      onClick={() => agregarAlCarrito(producto)}
+                    >
+                      Agregar <BsCartPlus />
+                    </button>
+                    <button
+                      className="btn btn-success d-flex align-items-center justify-content-center gap-2"
+                      onClick={() => comprarAhora && comprarAhora(producto)}
+                    >
+                      Comprar Ahora <BsShop />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -54,3 +50,4 @@ const imagenes = {
     </div>
   );
 };
+

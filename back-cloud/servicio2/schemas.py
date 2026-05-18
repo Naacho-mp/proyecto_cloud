@@ -22,7 +22,8 @@ class ProductoOut(BaseModel):
     id: int
     nombre: str
     precio: float
-    stock: int 
+    stock: int
+    imagen: str | None = None
     
     class Config:
         from_attributes = True

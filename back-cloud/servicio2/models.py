@@ -21,6 +21,7 @@ class Producto(Base):
     nombre: Mapped[str] = mapped_column(String(100), nullable=False)
     precio: Mapped[float] = mapped_column(Float, nullable=False)
     stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    imagen: Mapped[str] = mapped_column(String(255), nullable=True)
     
     items_carrito: Mapped[list["Carrito"]] = relationship("Carrito", back_populates="producto")
 

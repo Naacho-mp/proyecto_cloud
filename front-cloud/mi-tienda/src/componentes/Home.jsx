@@ -90,6 +90,7 @@ function Home({ agregarAlCarrito }) {
         <hr className="w-25 mx-auto" />
       </div>
 
+
       {error && (
         <div className="container mb-4">
           <div className="alert alert-danger alert-dismissible fade show" role="alert">

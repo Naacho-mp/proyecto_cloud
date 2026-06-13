@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 import bcrypt
 import schemas, database
 from crud import crud_usuarios
+import os, requests
 
+CODIGO_API_URL = os.getenv("CORREO_API_URL")
 
 api_usuarios = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -26,9 +28,31 @@ def solicitar_codigo(payload: schemas.PedirCodigoRequest, db: Session = Depends(
     
     codigo = crud_usuarios.generar_y_guardar_codigo(db, payload.correo)
     
-    # Simulación de envío PARA PROBAR EL CODIGO GENERADO EN LA TERMINAL
-    print(f"\n [PRUEBA LOCAL] CÓDIGO GENERADO: {codigo} PARA {payload.correo} \n")
-    
+    correo_payload = {
+        "para": payload.correo,
+        "asunto": "Código de Verificación",
+        "mensajeHtml": f"""
+            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #005088;">¡Hola, {payload.nombre}!</h2>
+                <p>Gracias por registrarte. Tu código de verificación es el siguiente:</p>
+                <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #11caa0; border-radius: 6px; margin: 20px 0;">
+                    {codigo}
+                </div>
+                <p style="font-size: 14px; color: #64748b;">Por favor, ingrésalo en la aplicación para continuar con tu registro.</p>
+            </div>
+        """
+    }
+
+    try:
+        respuesta = requests.post(CODIGO_API_URL, json=correo_payload, timeout=5.0)
+        
+        if respuesta.status_code != 200:
+            print(f"\n[ALERTA] API de notificaciones respondió con estado: {respuesta.status_code}\n")
+            
+    except requests.exceptions.RequestException as e:
+        # Si la ip se cae, el backend responde
+        print(f"\n[ERROR] No se pudo conectar con el servicio de correos: {e}\n")
+   
     return {"message": "Código de verificación enviado al correo"}
 
 

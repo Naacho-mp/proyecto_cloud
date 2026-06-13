@@ -6,7 +6,7 @@ class UsuarioBase(BaseModel):
     correo: EmailStr
 
 class PedirCodigoRequest(UsuarioBase):
-    pass
+    nombre:str
 
 
 #----------------------REGISTRO CLIENTE--------------------

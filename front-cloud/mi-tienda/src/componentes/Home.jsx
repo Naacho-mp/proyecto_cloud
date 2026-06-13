@@ -8,7 +8,23 @@ function Home({ agregarAlCarrito }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getProductos().then(data => setProductos(data))
+    setCargando(true);
+    getProductos()
+      .then(data => {
+        console.log('[Home] Productos recibidos:', data);
+        // Asegurarse de que data sea un array y no un objeto de error
+        if (Array.isArray(data)) {
+          setProductos(data);
+        } else {
+          console.error('[Home] Los datos recibidos no son un array:', data);
+          setError('El servidor respondió con un formato inesperado.');
+        }
+      })
+      .catch(err => {
+        console.error('[Home] Error al cargar productos:', err);
+        setError('No se pudieron cargar los productos. Por favor, intenta de nuevo más tarde.');
+      })
+      .finally(() => setCargando(false));
   }, [])
 
   const comprarAhora = async (producto) => {

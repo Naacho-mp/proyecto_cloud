@@ -8,10 +8,23 @@ const isDevelopment = import.meta.env.DEV;
 const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
 const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "/java";
 
+// Imprimir URLs configuradas para debug
+console.log(`[API] Mode: ${isDevelopment ? 'DEV' : 'PROD'}`);
+console.log(`[API] BASE_URL: ${BASE_URL}`);
+console.log(`[API] WEBPAY_URL: ${WEBPAY_URL}`);
+
 
 export const getProductos = async () => {
-    const response = await fetch(`${BASE_URL}/productos/`)
-    return response.json()
+    try {
+        const response = await fetch(`${BASE_URL}/productos/`)
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json()
+    } catch (error) {
+        console.error("Error en getProductos:", error);
+        throw error;
+    }
 }
 
 // Usuarios

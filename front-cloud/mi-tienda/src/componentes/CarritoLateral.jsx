@@ -40,8 +40,8 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       const sessionId = String(usuario.id);
 
       //const returnUrl = `${window.location.origin}/webpay-retorno`;
-      const returnUrl = `http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/webpay-retorno`;
-
+      //const returnUrl = `http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/webpay-retorno`;
+        const returnUrl = `${window.location.origin}/webpay-retorno`;
       // Guardar carrito en localStorage ANTES de ir a Webpay
       localStorage.setItem('carrito', JSON.stringify(carrito));
       console.log('[CarritoLateral] Carrito guardado en localStorage:', carrito);

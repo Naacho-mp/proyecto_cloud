@@ -5,3 +5,7 @@ sqlalchemy
 python-dotenv
 bcrypt
 pydantic[email]
+boto3
+reportlab
+python-multipart
+requests

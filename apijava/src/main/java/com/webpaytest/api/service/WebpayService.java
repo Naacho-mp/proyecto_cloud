@@ -31,101 +31,23 @@ public class WebpayService {
 
 	private static final Logger logger = LoggerFactory.getLogger(WebpayService.class);
 
-	private final WebpayPlus.Transaction transaction;
+	private final com.webpaytest.api.payment.PaymentGateway paymentGateway;
 
-	public WebpayService(WebpayPlus.Transaction transaction) {
-		this.transaction = transaction;
+	public WebpayService(com.webpaytest.api.payment.PaymentGateway paymentGateway) {
+		this.paymentGateway = paymentGateway;
 	}
 
 	/**
-	 * Crea una nueva transacción en Webpay
+	 * Crea una nueva transacción (delegada al gateway configurado)
 	 */
 	public CreateTransactionResponse createTransaction(CreateTransactionRequest request) {
 		logger.info("Creando transacción - Orden: {}, Monto: {}",
 				request.getBuyOrder(), request.getAmount());
-
-		// 🔥 FORZAR HTTP: toma la returnUrl original y reemplaza https por http
-		String originalReturnUrl = request.getReturnUrl();
-		String forcedHttpReturnUrl = originalReturnUrl.replace("https://", "http://");
-
-		logger.info("📍 ReturnUrl original: {}", originalReturnUrl);
-		logger.info("✅ ReturnUrl forzada a HTTP: {}", forcedHttpReturnUrl);
-
-		// Si la URL ya era http, el replace no hará nada
-		// Si era https, la convertimos a http
-
-		try {
-			var output = transaction.create(
-					request.getBuyOrder(),
-					request.getSessionId(),
-					request.getAmount(),
-					forcedHttpReturnUrl   // <-- Usamos la versión HTTP forzada
-			);
-
-			logger.info("Transacción creada - Token: {}", output.getToken());
-
-			return CreateTransactionResponse.builder()
-					.token(output.getToken())
-					.url(output.getUrl())
-					.buyOrder(request.getBuyOrder())
-					.sessionId(request.getSessionId())
-					.build();
-
-		} catch (Exception ex) {
-			logger.error("Error al crear transacción: {}", ex.getMessage(), ex);
-			throw new WebpayException(
-					"Error al crear: " + ex.getMessage(),
-					"CREATE_ERROR");
-		}
+		return paymentGateway.create(request);
 	}
 	public CommitTransactionResponse commitTransaction(CommitTransactionRequest request) {
 		logger.info("Confirmando transacción - Token: {}", request.getToken());
-
-		try {
-			var output = transaction.commit(request.getToken());
-
-			logger.info("Transacción confirmada - Orden: {}", output.getBuyOrder());
-
-			// Extraer card detail de forma segura
-			String cardNumber = extractCardNumber(output);
-
-			return CommitTransactionResponse.builder()
-					.buyOrder(output.getBuyOrder())
-					.cardNumber(cardNumber)
-					.authorizationCode(output.getAuthorizationCode())
-					.paymentTypeCode(output.getPaymentTypeCode())
-					.responseCode((int) output.getResponseCode())
-					.amount(String.valueOf(output.getAmount()))
-					.status(output.getStatus())
-					.installmentsNumber(String.valueOf(output.getInstallmentsNumber()))
-					.installmentsAmount(String.valueOf(output.getInstallmentsAmount()))
-					.build();
-
-		} catch (Exception ex) {
-			String errorMsg = ex.getMessage();
-			logger.error("Error al confirmar transacción - Token: {}, Error: {}",
-					request.getToken(), errorMsg, ex);
-
-			// Detectar si es error de transacción duplicada (422)
-			if (errorMsg != null && (
-					errorMsg.contains("already locked") ||
-					errorMsg.contains("Transaction already") ||
-					errorMsg.contains("422"))) {
-
-				logger.warn("Intento de confirmar transacción ya procesada - Token: {}",
-						request.getToken());
-
-				throw new WebpayException(
-						"Esta transacción ya fue procesada. No se puede confirmar dos veces.",
-						"TRANSACTION_ALREADY_LOCKED",
-						422);
-			}
-
-			throw new WebpayException(
-					"Error al confirmar: " + errorMsg,
-					"COMMIT_ERROR",
-					400);
-		}
+		return paymentGateway.commit(request);
 	}
 
 	/**
@@ -133,31 +55,7 @@ public class WebpayService {
 	 */
 	public GetStatusResponse getTransactionStatus(GetStatusRequest request) {
 		logger.info("Consultando estado - Token: {}", request.getToken());
-
-		try {
-			var output = transaction.status(request.getToken());
-
-			logger.info("Estado consultado - Orden: {}", output.getBuyOrder());
-
-			String cardNumber = extractCardNumber(output);
-
-			return GetStatusResponse.builder()
-					.buyOrder(output.getBuyOrder())
-					.cardNumber(cardNumber)
-					.authorizationCode(output.getAuthorizationCode())
-					.paymentTypeCode(output.getPaymentTypeCode())
-					.responseCode((int) output.getResponseCode())
-					.status(output.getStatus())
-					.installmentsNumber(String.valueOf(output.getInstallmentsNumber()))
-					.installmentsAmount(String.valueOf(output.getInstallmentsAmount()))
-					.build();
-
-		} catch (Exception ex) {
-			logger.error("Error al consultar estado: {}", ex.getMessage(), ex);
-			throw new WebpayException(
-					"Error al consultar: " + ex.getMessage(),
-					"STATUS_ERROR");
-		}
+		return paymentGateway.status(request);
 	}
 
 	/**
@@ -165,35 +63,7 @@ public class WebpayService {
 	 */
 	public RefundTransactionResponse refundTransaction(RefundTransactionRequest request) {
 		logger.info("Reembolsando - Token: {}", request.getToken());
-
-		try {
-			// El método requiere un double. Asumimos reembolso total pasando 0 o consultando algo,
-			// pero usualmente se requiere el amount de la transacción original para reembolso.
-			// Por diseño del método API real, debemos pasar un monto. Si la request no lo trae, enviaremos 0 y dependerá de webpay cómo lo interpreta (algunas veces 0 no anula). Si el DTO no tiene amount, temporalmente usaremos un valor mock o actualizaremos el DTO, pero para que compile pasaremos 0 o un double que tengamos.
-			// Asumamos que el usuario nos dice el amount o lo consultamos. Aquí pasamos 0 d para que compile, pero lo ideal es pasar el full amount de la transacción original.
-			var output = transaction.refund(request.getToken(), 0d);
-
-			// Nota: La clase real WebpayPlusTransactionRefundResponse no tiene algunos getters antiguos.
-			// Según Transbank SDK 6.x la respuesta de refund es de tipo WebpayPlusTransactionRefundResponse
-			// Tiene métodos: getType(), getBalance(), getAuthorizationCode(), getAuthorizationDate(), getNullifiedAmount(), getResponseCode()
-			logger.info("Reembolso procesado - Tipo: {}", output.getType());
-
-			return RefundTransactionResponse.builder()
-					.type(output.getType())
-					// no tiene getToken() en WebpayPlusTransactionRefundResponse, devolvemos el del request
-					.token(request.getToken())
-					// getNullifiedAmount devuelve primitivo double
-					.refundedAmount((long) output.getNullifiedAmount())
-					.balance((int) output.getBalance())
-					.status(output.getResponseCode() == 0 ? "REFUNDED" : "FAILED")
-					.build();
-
-		} catch (Exception ex) {
-			logger.error("Error al reembolsar: {}", ex.getMessage(), ex);
-			throw new WebpayException(
-					"Error al reembolsar: " + ex.getMessage(),
-					"REFUND_ERROR");
-		}
+		return paymentGateway.refund(request);
 	}
 
 	/**

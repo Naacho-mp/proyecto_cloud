@@ -1,5 +1,6 @@
-from sqlalchemy import Integer, String, ForeignKey, Float
+from sqlalchemy import Integer, String, ForeignKey, Float, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
+from datetime import datetime
 
 
 class Base(DeclarativeBase):
@@ -8,6 +9,7 @@ class Base(DeclarativeBase):
 class Usuario(Base):
     __tablename__ = "usuarios"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String(50),  nullable=False)
     correo: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
@@ -44,3 +46,12 @@ class Pedido(Base):
     total: Mapped[float] = mapped_column(Float, nullable=False)
 
     usuario: Mapped["Usuario"] = relationship("Usuario", back_populates="pedidos")
+
+class CodigoVerificacion(Base):
+    __tablename__ = "codigos_verificacion"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    correo: Mapped[str] = mapped_column(String(100), nullable=False)
+    codigo: Mapped[str] = mapped_column(String(4), nullable=False)
+    expiracion: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    usado: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

@@ -1,17 +1,29 @@
 from pydantic import BaseModel, EmailStr
 
-#---------------------- LOGIN CLIENTE ----------------------
 
-class UsuarioLogin(BaseModel):
+#----------------------ENVIAR CODIGO-----------------------
+class UsuarioBase(BaseModel):
     correo: EmailStr
-    password: str 
 
-class UsuarioCreate(UsuarioLogin):
+class PedirCodigoRequest(UsuarioBase):
     pass
 
-class UsuarioOut(BaseModel):
+
+#----------------------REGISTRO CLIENTE--------------------
+class UsuarioCreate(UsuarioBase):
+    nombre: str
+    password: str
+    codigo: str
+
+#---------------------- LOGIN CLIENTE ----------------------
+
+
+class UsuarioLogin(UsuarioBase):
+    password: str
+
+class UsuarioOut(UsuarioBase):
     id: int
-    correo: EmailStr
+    nombre: str 
     
     class Config:
         from_attributes = True

@@ -1,24 +1,38 @@
 import React from 'react'
 import logo from '../assets/imagenes/logo_ucm_marca.png'
 import { BsCartPlus } from 'react-icons/bs'
-import { useNavigate } from 'react-router-dom' 
+import { useNavigate, Link } from 'react-router-dom' 
 
 export const Navbar = ({ cantidadCarrito = 0 }) => {
   const navigate = useNavigate();
   const usuario = JSON.parse(localStorage.getItem("usuario"))
 
+  const cerrarSesion = (e) => {
+    e.preventDefault(); 
+    
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+  
+    navigate("/login"); 
+  };
+
   return (
     <nav className="navbar navbar-expand-lg bg-body-tertiary shadow-sm">
       <div className="container-fluid">
-        <img src={logo} alt="Logo UCM" className="nav-logo" style={{ height: '40px' }} />
+        <Link to={"/productos"}><img src={logo} alt="Logo UCM" className="nav-logo" style={{ height: '40px' }}/></Link>
         
         <div className="d-flex order-lg-last align-items-center">
 
           {usuario && (
             <div className="d-flex align-items-center gap-2">
               <span className="text-muted fw-semibold" style={{ fontSize: '0.9rem' }}>
-                {usuario.correo}
+
+                Bienvenido(a):{' '}
+                <Link to="/miperfil" className="text-dark fw-bold text-decoration-none">
+                {usuario.nombre} - Mi Perfil | </Link>  <a href="#" onClick={cerrarSesion}>Cerrar Sesión</a>
               </span>
+              
+
             </div>
           )}
 

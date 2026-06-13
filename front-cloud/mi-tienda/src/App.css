@@ -69,11 +69,38 @@
   background-color: rgb(62, 113, 207);
   color: rgb(241, 241, 241);
   font-weight: 600;
-  width: 100%;
+  /* width: 100%; */
   border: none;
 }
 
 .btn.login-btn:hover {
   background-color: rgb(45, 90, 180);
+  color: rgb(241, 241, 241);
+}
+
+.btn.registrar-btn {
+  background-color: rgb(13, 91, 58);
+  color: rgb(241, 241, 241);
+  font-weight: 600;
+  /* width: 100%; */
+  border: none;
+}
+
+.btn.registrar-btn:hover {
+  background-color: rgb(12, 141, 20);
+  color: rgb(241, 241, 241);
+}
+
+.btn.codigo-btn {
+  background-color: rgb(13, 91, 58);
+  color: rgb(241, 241, 241);
+  font-weight: 600;
+  width: 40%;
+  border: none;
+  
+}
+
+.btn.codigo-btn:hover {
+  background-color: rgb(12, 141, 20);
   color: rgb(241, 241, 241);
 }

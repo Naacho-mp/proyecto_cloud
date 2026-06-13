@@ -41,7 +41,11 @@ function Login() {
               required
             />
           </div>
-          <button type="submit" className="btn login-btn">Iniciar sesión</button>
+          
+          <div className='d-flex gap-2'>
+          <button type="submit" className="btn login-btn w-50">Iniciar sesión</button>
+          <button type="button" className="btn registrar-btn w-50" onClick={() => navigate('/registro')}>Registrarse</button>
+          </div>
         </form>
       </div>
     </div>

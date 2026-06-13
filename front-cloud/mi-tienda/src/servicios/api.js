@@ -4,6 +4,7 @@ const isDevelopment = import.meta.env.DEV;
 // URLs de API
 // En desarrollo: puede usar localhost directamente para testing rápido
 // En producción: SIEMPRE usa rutas relativas porque Nginx hace proxy interno
+
 const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
 const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "/java";
 
@@ -14,11 +15,20 @@ export const getProductos = async () => {
 }
 
 // Usuarios
-export const registrarUsuario = async (correo, password) => {
+export const registrarUsuario = async (nombre, correo, password, codigo) => {
     const response = await fetch(`${BASE_URL}/usuarios/registro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo, password })
+        body: JSON.stringify({ nombre, correo, password, codigo })
+    })
+    return response.json()
+}
+
+export const enviarCodigoVerificacion = async (correo) => {
+    const response = await fetch(`${BASE_URL}/usuarios/enviar-codigo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo }) 
     })
     return response.json()
 }

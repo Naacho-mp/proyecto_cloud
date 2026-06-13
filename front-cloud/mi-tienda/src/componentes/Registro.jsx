@@ -1,0 +1,177 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { registrarUsuario, enviarCodigoVerificacion } from '../servicios/api';
+import logo from '../assets/imagenes/logo_ucm_marca.png';
+
+function Registro() {  
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmarPassword, setConfirmarPassword] = useState('');
+  const [codigo, setCodigo] = useState('');
+  const [error, setError] = useState('');
+  const [mensajeExito, setMensajeExito] = useState(''); 
+  const [cargandoCodigo, setCargandoCodigo] = useState(false);
+  
+  const navigate = useNavigate();
+
+  const handleEnviarCodigo = async () => {
+    setError('');
+    setMensajeExito('');
+    
+    if (!email) {
+      setError('Por favor, ingresa un correo electrónico primero');
+      return;
+    }
+    try {
+      setCargandoCodigo(true);
+      // Llamamos a la API de enviar-codigo
+      const data = await enviarCodigoVerificacion(email);
+      
+      if (data.detail) {
+        // Si el backend responde con un error 
+        setError(data.detail);
+      } else {
+        setMensajeExito('¡Código generado! Revisa la consola de VS Code');
+      }
+    } catch (err) {
+      console.error("Detalle del error atrapado:", err);
+      setError('Error al conectar con el servidor');
+    } finally {
+      setCargandoCodigo(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validar contraseñas en el frontend antes de ir al backend
+    if (password !== confirmarPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    try {
+      // Llamamos a la API registro
+      const data = await registrarUsuario(nombre, email, password, codigo);
+
+      if (data.detail) {
+        // Si el código es inválido o expiró se manda el msje acá
+        setError(data.detail);
+      } else {
+        // Registro exitoso, redirigimos al login
+        alert('Usuario registrado con éxito. Ahora puedes iniciar sesión.');
+        navigate('/login');
+      }
+    } catch (err) {
+      setError('Hubo un error al procesar el registro.');
+    }
+  };
+
+  return (
+    <div className="login-container mt-3">
+      <div className="card login-card">
+        <img src={logo} alt="Logo UCM" className="nav-logo" style={{ height: '80px' }} />
+        <p className="login-subtitulo">Crea tu cuenta para continuar</p>
+        {error && <div className="alert alert-danger py-2">{error}</div>}
+        {mensajeExito && <div className="alert alert-success py-2">{mensajeExito}</div>}
+
+
+        <form onSubmit={handleSubmit}>
+
+          <div className="mb-3">
+            <label htmlFor="nombre" className="form-label fw-semibold">Nombre</label>
+            <input
+              type="text"
+              id="nombre"
+              className="form-control"
+              placeholder="Juan Perez"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label htmlFor="email" className="form-label fw-semibold">Correo electrónico</label>
+            <input
+              type="email"
+              id="email"
+              className="form-control"
+              placeholder="ejemplo@correo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="password" className="form-label fw-semibold">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              className="form-control"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="confirmarPassword" className="form-label fw-semibold">Confirmar contraseña</label>
+            <input
+              type="password"
+              id="confirmarPassword"
+              className="form-control"
+              placeholder="••••••••"
+              value={confirmarPassword}
+              onChange={(e) => setConfirmarPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-5">
+            <label htmlFor="codigo" className="form-label fw-semibold">Código de verificación</label>
+            <div className="d-flex gap-2">
+              <input 
+                type="text" 
+                id="codigo" 
+                className="form-control" 
+                placeholder="Ingresa el código" 
+                value={codigo} 
+                onChange={(e) => setCodigo(e.target.value)}
+                required
+              />
+              <button 
+                type="button" 
+                className="btn codigo-btn" 
+                onClick={handleEnviarCodigo}
+                disabled={cargandoCodigo} // Deshabilita el botón se procesa
+              > 
+                {cargandoCodigo ? 'Enviando...' : 'Enviar'} 
+              </button>
+            </div>
+          </div>
+
+          
+          <div className="d-flex gap-2 mt-4">
+            <button
+              type="button"
+              className="btn login-btn w-50"
+              style={{ backgroundColor: '#6c757d', borderColor: '#6c757d' }}
+              onClick={() => navigate('/login')}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="btn login-btn w-50">
+              Registrarse
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default Registro;

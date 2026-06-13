@@ -7,6 +7,8 @@ import Home from './componentes/Home'
 import ResultadoPago from './componentes/ResultadoPago'
 import WebpayRetorno from './componentes/WebpayRetorno'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import Registro from './componentes/Registro'
+import { MiPerfil } from './componentes/MiPerfil'
 
 function App() {
   return (
@@ -14,6 +16,13 @@ function App() {
       {({ carrito, agregarAlCarrito, cantidadTotal, eliminarDelCarrito }) => (
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro/>}/>
+          <Route path="/miperfil" element={
+            <>
+              <Navbar cantidadCarrito={cantidadTotal} />
+              <MiPerfil />
+            </>
+          }/> 
           <Route path="/productos" element={
             <>
               <Navbar cantidadCarrito={cantidadTotal} />

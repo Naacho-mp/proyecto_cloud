@@ -24,11 +24,11 @@ export const registrarUsuario = async (nombre, correo, password, codigo) => {
     return response.json()
 }
 
-export const enviarCodigoVerificacion = async (correo) => {
+export const enviarCodigoVerificacion = async (correo, nombre) => {
     const response = await fetch(`${BASE_URL}/usuarios/enviar-codigo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo }) 
+        body: JSON.stringify({ correo, nombre }) 
     })
     return response.json()
 }

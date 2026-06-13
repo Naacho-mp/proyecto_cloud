@@ -19,20 +19,20 @@ function Registro() {
     setError('');
     setMensajeExito('');
     
-    if (!email) {
-      setError('Por favor, ingresa un correo electrónico primero');
+    if (!nombre.trim() || !email.trim()) {
+      setError('Por favor, ingresa tu nombre y correo electrónico');
       return;
     }
     try {
       setCargandoCodigo(true);
       // Llamamos a la API de enviar-codigo
-      const data = await enviarCodigoVerificacion(email);
+      const data = await enviarCodigoVerificacion(email, nombre);
       
       if (data.detail) {
         // Si el backend responde con un error 
         setError(data.detail);
       } else {
-        setMensajeExito('¡Código generado! Revisa la consola de VS Code');
+        setMensajeExito('Código Enviado! Revisa tu email');
       }
     } catch (err) {
       console.error("Detalle del error atrapado:", err);

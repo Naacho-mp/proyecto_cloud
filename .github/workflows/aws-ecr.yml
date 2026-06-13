@@ -31,9 +31,9 @@ jobs:
         run: |
           docker build -t front-cloud ./front-cloud/mi-tienda
           docker tag front-cloud:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/front-react-cloud:latest
-          docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com//front-react-cloud:latest
+          docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/front-react-cloud:latest
 
-      - name: Build y push Backend - FastAPI
+      - name: Build y push Backend - FastAPI  
         run: |
           docker build -t back-cloud ./back-cloud/servicio2
           docker tag back-cloud:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/back-fastapi-cloud:latest

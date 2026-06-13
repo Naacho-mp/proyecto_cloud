@@ -6,6 +6,9 @@ import Login from './componentes/Login'
 import Home from './componentes/Home'
 import ResultadoPago from './componentes/ResultadoPago'
 import WebpayRetorno from './componentes/WebpayRetorno'
+import PagoSuccess from './componentes/PagoSuccess'
+import PagoFailure from './componentes/PagoFailure'
+import PagoPending from './componentes/PagoPending'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Registro from './componentes/Registro'
 import { MiPerfil } from './componentes/MiPerfil'
@@ -32,6 +35,9 @@ function App() {
           } />
           <Route path="/webpay-retorno" element={<WebpayRetorno />} />
           <Route path="/pago-resultado" element={<ResultadoPago />} />
+          <Route path="/success" element={<PagoSuccess />} />
+          <Route path="/failure" element={<PagoFailure />} />
+          <Route path="/pending" element={<PagoPending />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       )}

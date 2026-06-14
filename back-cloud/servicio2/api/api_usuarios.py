@@ -4,6 +4,7 @@ import bcrypt
 import schemas, database
 from crud import crud_usuarios
 import os, requests
+from s3_service import crear_carpeta_usuario
 
 CODIGO_API_URL = os.getenv("CORREO_API_URL")
 
@@ -82,6 +83,8 @@ def registro(credenciales: schemas.UsuarioCreate, db: Session = Depends(database
         password_hash=password_hasheada
     )
     
+    crear_carpeta_usuario(nuevo_usuario.correo)
+
     return nuevo_usuario
 
 

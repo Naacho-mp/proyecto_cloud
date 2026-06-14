@@ -2,6 +2,7 @@ import pyodbc, os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
+from models import Base 
 
 load_dotenv()
 
@@ -29,6 +30,7 @@ SQLALCHEMY_URL = (
 )
 
 engine = create_engine(SQLALCHEMY_URL)
+Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():

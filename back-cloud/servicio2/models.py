@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, ForeignKey, Float, Boolean, DateTime
+from sqlalchemy import Integer, String, ForeignKey, Float, Boolean, DateTime, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 from datetime import datetime
 
@@ -15,6 +15,8 @@ class Usuario(Base):
 
     pedidos: Mapped[list["Pedido"]] = relationship("Pedido", back_populates="usuario")
     items_carrito: Mapped[list["Carrito"]] = relationship("Carrito", back_populates="usuario")
+    archivos: Mapped[list["Archivo"]] = relationship("Archivo", back_populates="usuario")  
+
 
 
 class Producto(Base):
@@ -55,3 +57,15 @@ class CodigoVerificacion(Base):
     codigo: Mapped[str] = mapped_column(String(4), nullable=False)
     expiracion: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     usado: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+class Archivo(Base):
+    __tablename__ = "archivos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    nombre_original: Mapped[str] = mapped_column(String(255), nullable=False)
+    s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    tamano_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    fecha_subida: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    usuario_id: Mapped[int] = mapped_column(Integer, ForeignKey("usuarios.id"), nullable=False)
+
+    usuario: Mapped["Usuario"] = relationship("Usuario", back_populates="archivos")

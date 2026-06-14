@@ -8,6 +8,7 @@ from api.api_usuarios import api_usuarios
 from api.api_base_datos import api_conexion
 from api.api_carrito import api_carrito
 from api.api_boletas import api_boletas
+from api.api_archivos import api_archivos
 from contextlib import asynccontextmanager
 from database import SessionLocal
 from models import Producto
@@ -85,6 +86,7 @@ app.include_router(api_usuarios, prefix="/api")
 app.include_router(api_conexion, prefix="/api")
 app.include_router(api_carrito, prefix="/api")
 app.include_router(api_boletas, prefix="/api")
+app.include_router(api_archivos, prefix="/api")
 
 # ...existing code...
 

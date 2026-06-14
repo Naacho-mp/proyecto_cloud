@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-
+from datetime import datetime
 
 #----------------------ENVIAR CODIGO-----------------------
 class UsuarioBase(BaseModel):
@@ -65,6 +65,17 @@ class PedidoOut(BaseModel):
     id: int
     usuario_id: int
     total: float
+
+    class Config:
+        from_attributes = True
+
+#-----------------------ARCHIVOS---------------------
+class ArchivoOut(BaseModel):
+    id: int
+    nombre_original: str
+    tamano_bytes: int
+    fecha_subida: datetime
+    s3_key: str
 
     class Config:
         from_attributes = True

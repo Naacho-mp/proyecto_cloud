@@ -72,11 +72,13 @@ public class MercadoPagoGateway implements PaymentGateway {
             body.put("payer", payer);
 
             Map<String, Object> backUrls = new HashMap<>();
-            if (successUrl != null && !successUrl.isBlank()) backUrls.put("success", successUrl);
+            if (successUrl != null && !successUrl.isBlank()) {
+                backUrls.put("success", successUrl);
+                body.put("auto_return", "approved");   // mover aquí
+            }
             if (failureUrl != null && !failureUrl.isBlank()) backUrls.put("failure", failureUrl);
             if (pendingUrl != null && !pendingUrl.isBlank()) backUrls.put("pending", pendingUrl);
             if (!backUrls.isEmpty()) body.put("back_urls", backUrls);
-            body.put("auto_return", "approved");
 
             String json = mapper.writeValueAsString(body);
             HttpRequest httpRequest = HttpRequest.newBuilder()

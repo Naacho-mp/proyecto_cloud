@@ -9,8 +9,8 @@ env:
   ECR_REGISTRY: 108631844678.dkr.ecr.sa-east-1.amazonaws.com
   ECR_REPO_FASTAPI: back-cloud
   ECR_REPO_JAVA: api-java
-  ALB_DNS: amz-108631844678-sa-east-1-an  # ← pon el que te dé el ALB
-  S3_BUCKET: mi-app-react-s3-bucket                              # ← cámbialo
+  ALB_DNS: proyecto-alb-164649700.sa-east-1.elb.amazonaws.com  # ← pon el que te dé el ALB
+  S3_BUCKET: mi-app-react-48486213                            # ← cámbialo
   CLOUDFRONT_ID: E6GCKRMTYSF9X
 
 jobs:

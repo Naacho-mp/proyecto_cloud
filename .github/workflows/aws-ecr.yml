@@ -1,93 +1,100 @@
-name: build and push para AWS ECR - ECS
+name: Deploy to AWS (ALB + EC2 + S3)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+
+env:
+  AWS_REGION: sa-east-1
+  ECR_REGISTRY: 108631844678.dkr.ecr.sa-east-1.amazonaws.com
+  ECR_REPO_FASTAPI: back-cloud
+  ECR_REPO_JAVA: api-java
+  ALB_DNS: amz-108631844678-sa-east-1-an  # ← pon el que te dé el ALB
+  S3_BUCKET: mi-app-react-s3-bucket                              # ← cámbialo
+  CLOUDFRONT_ID: E1Z2ABC3DEF4GH5                                 # ← ID de tu CloudFront
 
 jobs:
-  build-and-push:
+  deploy-frontend:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Descargar el Codigo
-        uses: actions/checkout@v4
-
-      - name: Configurar AWS Credenciales
+      - uses: actions/checkout@v4
+      - name: Build React with ALB URL
+        run: |
+          cd front-cloud/mi-tienda
+          npm ci
+          VITE_API_URL=http://${{ env.ALB_DNS }}/api
+          VITE_WEBPAY_URL=http://${{ env.ALB_DNS }}/java
+          npm run build
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Sync to S3
+        run: |
+          aws s3 sync front-cloud/mi-tienda/dist/ s3://${{ env.S3_BUCKET }}/ --delete
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_ID }} --paths "/*"
 
-      - name: Login en AWS ECR
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Instalar jq (para manipular JSON)
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      # -------------------- BUILD & PUSH --------------------AHORA SAO PAULO
-      - name: Build y push Frontend - React
+      - name: Build and push FastAPI
         run: |
-          docker build -t front-cloud ./front-cloud/mi-tienda
-          docker tag front-cloud:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/front-cloud:latest
-          docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/front-cloud:latest
-
-      - name: Build y push Backend - FastAPI  
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FASTAPI }}:latest ./back-cloud/servicio2
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FASTAPI }}:latest
+      - name: Build and push Java
         run: |
-          docker build -t back-cloud ./back-cloud/servicio2
-          docker tag back-cloud:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/back-cloud:latest
-          docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/back-cloud:latest
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_JAVA }}:latest ./apijava
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_JAVA }}:latest
 
-      #-------------------FALTA MERCADO PAGO-------------
-      # - name: Build y push Api Pagos - Java
-      #   run: |
-      #     docker build -t api-java ./apijava
-      #     docker tag api-java:latest 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-java:latest
-      #     docker push 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-java:latest
+  deploy-fastapi-ec2:
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker
+    steps:
+      - name: Deploy to FastAPI EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FASTAPI_EC2_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo docker stop fastapi || true
+            sudo docker rm fastapi || true
+            sudo docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FASTAPI }}:latest
+            sudo docker run -d --name fastapi -p 8000:8000 \
+              -e DB_SERVER=${{ secrets.DB_SERVER }} \
+              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
+              ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FASTAPI }}:latest
 
-      # -------------------- DESHABILITAR HEALTH CHECKS Y DESPLEGAR --------------------
-      # Frontend
-      # - name: Deshabilitar health check y actualizar Frontend
-      #   run: |
-      #     # Obtener el nombre de la familia de tarea actual del servicio
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-frontend-service-k813gch9 --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
-          
-      #     # Obtener la definición de tarea más reciente de esa familia
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
-          
-      #     # Eliminar los campos que no se pueden enviar al registrar una nueva tarea, y también eliminar healthCheck
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
-          
-      #     # Registrar la nueva tarea sin health check
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-      #     # Actualizar el servicio para usar la nueva tarea y forzar despliegue
-      #     aws ecs update-service --cluster proyecto-cloud --service td-frontend-service-k813gch9 --task-definition $NEW_REVISION_ARN --force-new-deployment
-
-      # Backend
-      # - name: Deshabilitar health check y actualizar Backend
-      #   run: |
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-backend-service-rszdm4ad --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
-          
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
-          
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-      #     aws ecs update-service --cluster proyecto-cloud --service td-backend-service-rszdm4ad --task-definition $NEW_REVISION_ARN --force-new-deployment
-
-      # Api Pagos (Java)
-      # - name: Deshabilitar health check y actualizar Api Pagos
-      #   run: |
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-java-service-h2pngiik --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
-          
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
-          
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-      #     aws ecs update-service --cluster proyecto-cloud --service td-java-service-h2pngiik --task-definition $NEW_REVISION_ARN --force-new-deployment
+  deploy-java-ec2:
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker
+    steps:
+      - name: Deploy to Java EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.JAVA_EC2_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo docker stop java || true
+            sudo docker rm java || true
+            sudo docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_JAVA }}:latest
+            sudo docker run -d --name java -p 8080:8080 \
+              -e DB_URL=${{ secrets.DB_URL }} \
+              ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_JAVA }}:latest

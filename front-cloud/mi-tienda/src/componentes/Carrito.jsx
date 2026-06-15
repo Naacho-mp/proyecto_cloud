@@ -2,7 +2,6 @@ import { useState } from 'react'
 
 const Carrito = ({ children }) => {
   const [carrito, setCarrito] = useState([])
-
   const agregarAlCarrito = (producto) => {
     // Actualizar estado local (UI rápida)
     setCarrito((prev) => {

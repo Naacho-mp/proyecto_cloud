@@ -33,4 +33,3 @@ EXPOSE $PORT
 
 # El entrypoint usa la variable PORT que provee Render, con 8080 por defecto
 ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
-

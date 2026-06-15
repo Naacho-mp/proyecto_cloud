@@ -37,7 +37,7 @@ jobs:
       #-------------------FALTA MERCADO PAGO-------------
       - name: Build y push Api Pagos - Mercado Pagos
         run: |
-          docker build -t api-pagos ./api-pagos
+          docker build -t api-pagos ./apijava
           docker tag api-pagos:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/api-pagos:latest
           docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/api-pagos:latest
 

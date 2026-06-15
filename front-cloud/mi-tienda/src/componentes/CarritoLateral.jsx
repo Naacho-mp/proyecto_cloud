@@ -38,7 +38,6 @@ export const CarritoLateral = ({ carrito = [], eliminarDelCarrito = () => {} }) 
       const amount = Math.round(totalCarrito);
       const buyOrder = `ORD-${Date.now()}-${usuario.id}`;
       const sessionId = String(usuario.id);
-
       //const returnUrl = `${window.location.origin}/webpay-retorno`;
       //const returnUrl = `http://balanceador-carga-1567813537.us-east-1.elb.amazonaws.com/webpay-retorno`;
         const returnUrl = `${window.location.origin}/webpay-retorno`;

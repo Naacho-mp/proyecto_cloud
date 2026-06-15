@@ -8,6 +8,8 @@ from s3_service import crear_carpeta_usuario
 
 CODIGO_API_URL = os.getenv("CORREO_API_URL")
 
+
+
 api_usuarios = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 def hash_password(password: str) -> str:

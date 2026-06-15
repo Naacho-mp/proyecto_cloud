@@ -26,13 +26,8 @@ jobs:
       - name: Instalar jq (para manipular JSON)
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      # -------------------- BUILD & PUSH --------------------AHORA SAO PAULO
-      - name: Build y push Frontend - React
-        run: |
-          docker build -t front-cloud ./front-cloud/mi-tienda
-          docker tag front-cloud:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/front-cloud:latest
-          docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/front-cloud:latest
-
+      # -------------------- BUILD & PUSH --------------------
+ 
       - name: Build y push Backend - FastAPI  
         run: |
           docker build -t back-cloud ./back-cloud/servicio2
@@ -40,46 +35,27 @@ jobs:
           docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/back-cloud:latest
 
       #-------------------FALTA MERCADO PAGO-------------
-      # - name: Build y push Api Pagos - Java
-      #   run: |
-      #     docker build -t api-java ./apijava
-      #     docker tag api-java:latest 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-java:latest
-      #     docker push 108631844678.dkr.ecr.us-east-1.amazonaws.com/api-java:latest
+      - name: Build y push Api Pagos - Mercado Pagos
+        run: |
+          docker build -t api-pagos ./api-pagos
+          docker tag api-pagos:latest 108631844678.dkr.ecr.sa-east-1.amazonaws.com/api-pagos:latest
+          docker push 108631844678.dkr.ecr.sa-east-1.amazonaws.com/api-pagos:latest
 
       # -------------------- DESHABILITAR HEALTH CHECKS Y DESPLEGAR --------------------
-      # Frontend
-      # - name: Deshabilitar health check y actualizar Frontend
-      #   run: |
-      #     # Obtener el nombre de la familia de tarea actual del servicio
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-frontend-service-k813gch9 --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
+      #Backend
+      - name: Deshabilitar health check y actualizar Backend
+        run: |
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-backend --query 'services[0].taskDefinition' --output text)
+          FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
           
-      #     # Obtener la definición de tarea más reciente de esa familia
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
           
-      #     # Eliminar los campos que no se pueden enviar al registrar una nueva tarea, y también eliminar healthCheck
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
+          NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
           
-      #     # Registrar la nueva tarea sin health check
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-      #     # Actualizar el servicio para usar la nueva tarea y forzar despliegue
-      #     aws ecs update-service --cluster proyecto-cloud --service td-frontend-service-k813gch9 --task-definition $NEW_REVISION_ARN --force-new-deployment
+          aws ecs update-service --cluster proyecto-cloud --service tarea-backend --task-definition $NEW_REVISION_ARN --force-new-deployment
 
-      # Backend
-      # - name: Deshabilitar health check y actualizar Backend
-      #   run: |
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-backend-service-rszdm4ad --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
-          
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
-          
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-      #     aws ecs update-service --cluster proyecto-cloud --service td-backend-service-rszdm4ad --task-definition $NEW_REVISION_ARN --force-new-deployment
-
-      # Api Pagos (Java)
+      # # Api Pagos (Java)
       # - name: Deshabilitar health check y actualizar Api Pagos
       #   run: |
       #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services td-java-service-h2pngiik --query 'services[0].taskDefinition' --output text)

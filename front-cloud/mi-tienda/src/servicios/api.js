@@ -55,6 +55,37 @@ export const loginUsuario = async (correo, password) => {
     return response.json()
 }
 
+
+export const obtenerArchivosUsuario = async () => {
+    const usuario = JSON.parse(localStorage.getItem("usuario"))
+    
+    if (!usuario || !usuario.id) return []
+    
+    const response = await fetch(`${BASE_URL}/archivos/mis-archivos?usuario_id=${usuario.id}`)
+    
+    if (!response.ok) {
+        throw new Error("Error al obtener archivos")
+    }
+    
+    return await response.json()
+}
+
+export const subirArchivo = async (file) => {
+    const usuario = JSON.parse(localStorage.getItem("usuario"))
+    const formData = new FormData()
+    formData.append("archivo", file)
+
+    const response = await fetch(`${BASE_URL}/archivos/subir?usuario_id=${usuario.id}`, {
+        method: "POST",
+        body: formData
+    })
+    if (!response.ok) throw new Error("Error al subir archivo")
+    return await response.json()
+}
+
+
+
+
 // Carrito
 export const agregarAlCarrito = async (usuario_id, producto_id, cantidad) => {
     const response = await fetch(`${BASE_URL}/carrito/agregar?usuario_id=${usuario_id}`, {

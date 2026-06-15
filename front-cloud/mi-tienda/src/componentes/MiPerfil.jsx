@@ -1,21 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BsCloudUpload, BsTrash, BsFileEarmarkText } from 'react-icons/bs';
+import { obtenerArchivosUsuario, subirArchivo } from '../servicios/api';
+
 
 export const MiPerfil = () => {
   const usuario = JSON.parse(localStorage.getItem("usuario")) || { nombre: "Usuario", correo: "correo@ucm.cl" };
 
   // Límite de almacenamiento ficticio: 500 MB (en Bytes para los cálculos)
-  const LIMITE_ALMACENAMIENTO = 500 * 1024 * 1024; 
+  const LIMITE_ALMACENAMIENTO = 2 * 1024 * 1024 * 1024; 
 
   // Estado para la lista de archivos (con algunos datos de prueba)
-  const [archivos, setArchivos] = useState([
-    { id: 1, nombre: "Image_mochila.jpeg", tamano: 15 * 1024 * 1024, fecha: "10/06/2026" },
-    { id: 2, nombre: "Imagen_producto_1.png", tamano: 2 * 1024 * 1024, fecha: "11/06/2026" }
-  ]);
+    const [archivos, setArchivos] = useState([]);
+
+  // cargar archivos al entrar al perfil
+  useEffect(() => {
+    obtenerArchivosUsuario()
+      .then(data => setArchivos(data))
+      .catch(err => console.error(err))
+  }, [])
 
 
   // --- CÁLCULOS DE ESPACIO ---
-  const espacioUtilizadoBytes = archivos.reduce((acc, curr) => acc + curr.tamano, 0);
+  const espacioUtilizadoBytes = archivos.reduce((acc, curr) => acc + curr.tamano_bytes, 0);
   const espacioDisponibleBytes = LIMITE_ALMACENAMIENTO - espacioUtilizadoBytes;
   const porcentajeUtilizado = (espacioUtilizadoBytes / LIMITE_ALMACENAMIENTO) * 100;
 
@@ -25,31 +31,25 @@ export const MiPerfil = () => {
   };
 
   // --- REQUISITO: Manejar la subida de archivos 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validar si el archivo supera el espacio disponible
     if (file.size > espacioDisponibleBytes) {
       alert("No tienes suficiente espacio disponible para subir este archivo.");
       return;
     }
 
-    // Agregar el archivo al estado local
-    const nuevoArchivo = {
-      id: Date.now(),
-      nombre: file.name,
-      tamano: file.size,
-      fecha: new Date().toLocaleDateString()
-    };
+    try {
+      const archivoSubido = await subirArchivo(file) // llama al backend
+      setArchivos([...archivos, archivoSubido])  // agrega el archivo real con id de RDS
+      alert("Archivo subido exitosamente")    
+    } catch (err) {
+      alert("Error al subir el archivo")
+      console.error(err)
+    }
+};
 
-    setArchivos([...archivos, nuevoArchivo]);
-  };
-
-  // Función para eliminar un archivo y liberar espacio
-  const eliminarArchivo = (id) => {
-    setArchivos(archivos.filter(archivo => archivo.id !== id));
-  };
 
   return (
     <div className="container my-5">
@@ -148,10 +148,10 @@ export const MiPerfil = () => {
                       <tr key={archivo.id}>
                         <td className="text-truncate fw-semibold text-dark" style={{ maxWidth: '250px' }}>
                           <BsFileEarmarkText className="me-2 text-primary" size={16} />
-                          {archivo.nombre}
+                          {archivo.nombre_original}
                         </td>
-                        <td className="text-muted">{formatearTamano(archivo.tamano)}</td>
-                        <td className="text-muted">{archivo.fecha}</td>
+                        <td className="text-muted">{formatearTamano(archivo.tamano_bytes)}</td>
+                        <td className="text-muted">{new Date(archivo.fecha_subida).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -45,7 +45,7 @@ jobs:
       #Backend
       - name: Deshabilitar health check y actualizar Backend
         run: |
-          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-backend --query 'services[0].taskDefinition' --output text)
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-backend-service-c5qi4ulx --query 'services[0].taskDefinition' --output text)
           FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
           
           TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
@@ -53,7 +53,7 @@ jobs:
           
           NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
           
-          aws ecs update-service --cluster proyecto-cloud --service tarea-backend --task-definition $NEW_REVISION_ARN --force-new-deployment
+          aws ecs update-service --cluster proyecto-cloud --service tarea-backend-service-c5qi4ulx --task-definition $NEW_REVISION_ARN --force-new-deployment
 
       # # Api Pagos (Java)
       # - name: Deshabilitar health check y actualizar Api Pagos

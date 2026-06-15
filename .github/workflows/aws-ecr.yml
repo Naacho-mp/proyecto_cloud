@@ -18,6 +18,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Get ALB DNS from Terraform
+        run: |
+          cd terraform   # <-- ajusta la ruta donde está tu configuración Terraform
+          terraform init
+          echo "ALB_DNS=$(terraform output -raw alb_dns)" >> $GITHUB_ENV
+
+      - name: Build React with ALB URL
+        run: |
+          cd front-cloud/mi-tienda
+          npm ci
+          VITE_API_URL=http://${{ env.ALB_DNS }}/api
+          VITE_WEBPAY_URL=http://${{ env.ALB_DNS }}/java
+          npm run build
       - name: Build React with ALB URL
         run: |
           cd front-cloud/mi-tienda

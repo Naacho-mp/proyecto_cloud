@@ -14,6 +14,11 @@ data "aws_subnets" "public" {
   }
 }
 
+data "aws_ssm_parameter" "amzn2_ami" {
+  name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+}
+
+
 # Security Groups
 resource "aws_security_group" "alb" {
   name   = "alb-sg"
@@ -80,11 +85,11 @@ resource "aws_security_group" "ec2_java" {
 
 # EC2 para FastAPI (t3.small)
 resource "aws_instance" "fastapi" {
-  ami                    = "ami-0c02fb55956c7d316" # Amazon Linux 2 (sa-east-1)
+  ami                    = data.aws_ssm_parameter.amzn2_ami.value # Amazon Linux 2 (sa-east-1)
   instance_type          = "t3.small"
   subnet_id              = data.aws_subnets.public.ids[0]
   vpc_security_group_ids = [aws_security_group.ec2_fastapi.id]
-  key_name               = "key-097615f3155b532ca"   # <-- CAMBIA POR EL NOMBRE DE TU KEY PAIR
+  key_name               = "keycloudterraform"   # <-- CAMBIA POR EL NOMBRE DE TU KEY PAIR
   user_data = <<-EOF
     #!/bin/bash
     sudo yum update -y
@@ -99,11 +104,11 @@ resource "aws_instance" "fastapi" {
 
 # EC2 para Java
 resource "aws_instance" "java" {
-  ami                    = "ami-0c02fb55956c7d316"
+  ami                    = data.aws_ssm_parameter.amzn2_ami.value
   instance_type          = "t3.small"
   subnet_id              = data.aws_subnets.public.ids[0]
   vpc_security_group_ids = [aws_security_group.ec2_java.id]
-  key_name               = "key-097615f3155b532ca"   # <-- CAMBIA POR EL NOMBRE DE TU KEY PAIR
+  key_name               = "keycloudterraform"   # <-- CAMBIA POR EL NOMBRE DE TU KEY PAIR
   user_data = <<-EOF
     #!/bin/bash
     sudo yum update -y
@@ -222,35 +227,36 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-resource "aws_s3_bucket_public_access_block" "frontend_block" {
-  bucket = aws_s3_bucket.frontend.id
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
+#resource "aws_s3_bucket_public_access_block" "frontend_block" {
+ # bucket = aws_s3_bucket.frontend.id
+  #block_public_acls       = false
+  #block_public_policy     = false
+  #ignore_public_acls      = false
+  #restrict_public_buckets = false
+#}
 
-resource "aws_s3_bucket_policy" "frontend_policy" {
-  bucket = aws_s3_bucket.frontend.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.frontend.arn}/*"
-      }
-    ]
-  })
-}
+#resource "aws_s3_bucket_policy" "frontend_policy" {
+ # bucket = aws_s3_bucket.frontend.id
+  #policy = jsonencode({
+   # Version = "2012-10-17"
+#Statement = [
+ #     {
+  #      Sid       = "PublicReadGetObject"
+   #     Effect    = "Allow"
+    #    Principal = "*"
+     #   Action    = "s3:GetObject"
+      #  Resource  = "${aws_s3_bucket.frontend.arn}/*"
+      #}
+    #]
+  #})
+#}
 
 # CloudFront para S3
 resource "aws_cloudfront_distribution" "frontend" {
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id   = "S3Origin"
+    origin_access_control_id = aws_cloudfront_origin_access_control.frontend_oac.id
   }
   enabled             = true
   default_root_object = "index.html"
@@ -274,6 +280,13 @@ resource "aws_cloudfront_distribution" "frontend" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+}
+
+resource "aws_cloudfront_origin_access_control" "frontend_oac" {
+  name                              = "oac-frontend"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 # Outputs útiles

@@ -2,7 +2,7 @@ name: Deploy to AWS (ALB + EC2 + S3)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature/andres ]
 
 env:
   AWS_REGION: sa-east-1
@@ -11,7 +11,7 @@ env:
   ECR_REPO_JAVA: api-java
   ALB_DNS: amz-108631844678-sa-east-1-an  # ← pon el que te dé el ALB
   S3_BUCKET: mi-app-react-s3-bucket                              # ← cámbialo
-  CLOUDFRONT_ID: E1Z2ABC3DEF4GH5                                 # ← ID de tu CloudFront
+  CLOUDFRONT_ID: E6GCKRMTYSF9X
 
 jobs:
   deploy-frontend:

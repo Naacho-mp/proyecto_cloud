@@ -71,16 +71,29 @@ jobs:
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Instalar AWS CLI (si no está)
+            sudo yum install -y aws-cli
+
+            # Login a ECR
+            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+            # Detener y eliminar contenedor anterior
             sudo docker stop fastapi || true
             sudo docker rm fastapi || true
+
+            # Descargar la última imagen
             sudo docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FASTAPI }}:latest
+
+            # Ejecutar el nuevo contenedor
             sudo docker run -d --name fastapi -p 8000:8000 \
               -e DB_SERVER=${{ secrets.DB_SERVER }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
               ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_FASTAPI }}:latest
-
   deploy-java-ec2:
     runs-on: ubuntu-latest
     needs: build-and-push-docker
@@ -92,9 +105,23 @@ jobs:
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Instalar AWS CLI (si no está)
+            sudo yum install -y aws-cli
+
+            # Login a ECR
+            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+            # Detener y eliminar contenedor anterior
             sudo docker stop java || true
             sudo docker rm java || true
+
+            # Descargar la última imagen
             sudo docker pull ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_JAVA }}:latest
+
+            # Ejecutar el nuevo contenedor
             sudo docker run -d --name java -p 8080:8080 \
               -e DB_URL=${{ secrets.DB_URL }} \
               ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO_JAVA }}:latest

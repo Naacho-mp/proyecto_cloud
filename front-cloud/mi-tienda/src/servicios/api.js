@@ -5,8 +5,8 @@ const isDevelopment = import.meta.env.DEV;
 // En desarrollo: puede usar localhost directamente para testing rápido
 // En producción: SIEMPRE usa rutas relativas porque Nginx hace proxy interno
 
-const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "http://18.229.251.157:8000/api";
-const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "http://18.228.97.63:8080/java";
+const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "http://18.229.251.157:8000";
+const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "http://18.228.97.63:8080";
 
 // Imprimir URLs configuradas para debug
 console.log(`[API] Mode: ${isDevelopment ? 'DEV' : 'PROD'}`);

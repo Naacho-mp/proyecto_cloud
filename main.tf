@@ -235,31 +235,55 @@ resource "random_id" "bucket_suffix" {
   #restrict_public_buckets = false
 #}
 
-#resource "aws_s3_bucket_policy" "frontend_policy" {
- # bucket = aws_s3_bucket.frontend.id
-  #policy = jsonencode({
-   # Version = "2012-10-17"
-#Statement = [
- #     {
-  #      Sid       = "PublicReadGetObject"
-   #     Effect    = "Allow"
-    #    Principal = "*"
-     #   Action    = "s3:GetObject"
-      #  Resource  = "${aws_s3_bucket.frontend.arn}/*"
-      #}
-    #]
-  #})
-#}
+resource "aws_s3_bucket_policy" "frontend_policy" {
+  bucket = aws_s3_bucket.frontend.id
+  policy = data.aws_iam_policy_document.s3_cloudfront_policy.json
+}
+
+data "aws_iam_policy_document" "s3_cloudfront_policy" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.frontend.arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.frontend.arn]
+    }
+  }
+}
 
 # CloudFront para S3
+# CloudFront para S3 + ALB
 resource "aws_cloudfront_distribution" "frontend" {
+  # Origen para S3 (frontend estático)
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id   = "S3Origin"
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend_oac.id
   }
+
+  # Origen para el ALB (backend)
+  origin {
+    domain_name = aws_lb.main.dns_name
+    origin_id   = "ALBOrigin"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   enabled             = true
   default_root_object = "index.html"
+
+  # Comportamiento por defecto: S3 (frontend)
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
@@ -272,11 +296,51 @@ resource "aws_cloudfront_distribution" "frontend" {
     }
     viewer_protocol_policy = "redirect-to-https"
   }
+
+  # Comportamiento para /api/* -> ALB
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ALBOrigin"
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+      cookies {
+        forward = "all"
+      }
+    }
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
+  # Comportamiento para /java/* -> ALB
+  ordered_cache_behavior {
+    path_pattern     = "/java/*"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ALBOrigin"
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+      cookies {
+        forward = "all"
+      }
+    }
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
     }
   }
+
   viewer_certificate {
     cloudfront_default_certificate = true
   }

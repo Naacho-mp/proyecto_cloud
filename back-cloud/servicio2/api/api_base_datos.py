@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from database import get_db_connection
 
 api_conexion = APIRouter(prefix="/conect", tags=["Base de datos"])
-
+#dadsa
 @api_conexion.get("/conexion")
 def verificar_conexion():
     try:

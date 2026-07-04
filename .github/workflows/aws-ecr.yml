@@ -43,27 +43,27 @@ jobs:
 
       # -------------------- DESHABILITAR HEALTH CHECKS Y DESPLEGAR --------------------
       #Backend
-      # - name: Deshabilitar health check y actualizar Backend
-      #   run: |
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-backend-service-c5qi4ulx --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
+      - name: Deshabilitar health check y actualizar Backend
+        run: |
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-backend-service-c5qi4ulx --query 'services[0].taskDefinition' --output text)
+          FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
           
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
           
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
+          NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
           
-      #     aws ecs update-service --cluster proyecto-cloud --service tarea-backend-service-c5qi4ulx --task-definition $NEW_REVISION_ARN --force-new-deployment
+          aws ecs update-service --cluster proyecto-cloud --service tarea-backend-service-c5qi4ulx --task-definition $NEW_REVISION_ARN --force-new-deployment
 
-      # # # Api Pagos (Java)
-      # - name: Deshabilitar health check y actualizar Api Pagos
-      #   run: |
-      #     TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-api-pagos-service-rux0wol4 --query 'services[0].taskDefinition' --output text)
-      #     FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
+      # Api Pagos (Java)
+      - name: Deshabilitar health check y actualizar Api Pagos
+        run: |
+          TASK_DEF_ARN=$(aws ecs describe-services --cluster proyecto-cloud --services tarea-api-pagos-service-cc0o8dtu --query 'services[0].taskDefinition' --output text)
+          FAMILY=$(echo $TASK_DEF_ARN | cut -d '/' -f2 | cut -d ':' -f1)
           
-      #     TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
-      #     NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition $FAMILY --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF_JSON | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .healthCheck)')
           
-      #     NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
+          NEW_REVISION_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
           
-      #     aws ecs update-service --cluster proyecto-cloud --service tarea-api-pagos-service-rux0wol4 --task-definition $NEW_REVISION_ARN --force-new-deployment
+          aws ecs update-service --cluster proyecto-cloud --service tarea-api-pagos-service-cc0o8dtu --task-definition $NEW_REVISION_ARN --force-new-deployment

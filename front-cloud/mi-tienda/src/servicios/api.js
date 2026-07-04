@@ -7,8 +7,8 @@ const isDevelopment = import.meta.env.DEV;
 
 //const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
 //const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "/java";
-const BASE_URL = "http://15.228.241.208:8000/api";
-const WEBPAY_URL = "http://54.233.54.69:8080/java";
+const BASE_URL = "http://54.207.23.12:8000/api";
+const WEBPAY_URL = "http://18.231.151.69:8080/java";
 
 // Imprimir URLs configuradas para debug
 console.log(`[API] Mode: ${isDevelopment ? 'DEV' : 'PROD'}`);

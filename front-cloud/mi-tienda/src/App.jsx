@@ -12,6 +12,7 @@ import PagoPending from './componentes/PagoPending'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Registro from './componentes/Registro'
 import { MiPerfil } from './componentes/MiPerfil'
+import Dashboard from './componentes/Dashboard'
 
 function App() {
   return (
@@ -23,7 +24,11 @@ function App() {
           <Route path="/miperfil" element={
             <>
               <Navbar cantidadCarrito={cantidadTotal} />
-              <MiPerfil />
+              <MiPerfil /></>}/> 
+          <Route path='/dashboard' element={
+            <>
+              <Navbar/>
+              <Dashboard />
             </>
           }/> 
           <Route path="/productos" element={

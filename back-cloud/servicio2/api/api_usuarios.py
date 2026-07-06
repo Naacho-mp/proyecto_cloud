@@ -98,7 +98,7 @@ def login(credenciales: schemas.UsuarioLogin, db: Session = Depends(database.get
     if not usuario or not verificar_password(credenciales.password, usuario.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Correo o contraseña incorrectos"
+            detail="Correo o contraseña incorrectos test"
         )
     
     return usuario

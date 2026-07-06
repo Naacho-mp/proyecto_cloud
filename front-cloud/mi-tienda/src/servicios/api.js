@@ -5,22 +5,22 @@ const isDevelopment = import.meta.env.DEV;
 // En desarrollo: puede usar localhost directamente para testing rápido
 // En producción: SIEMPRE usa rutas relativas porque Nginx hace proxy interno
 
-const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
-const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "/java";
-// const BASE_URL = "http://54.207.23.12:8000/api";
-// const WEBPAY_URL = "http://18.231.151.69:8080/java";
+// const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
+// const WEBPAY_URL = isDevelopment ? "http://localhost:8080/java" : "/java";
+const BASE_URL = "http://carga.nicolasmendez.cl/api";
+const WEBPAY_URL = "http://carga.nicolasmendez.cl/java";
 
 // Imprimir URLs configuradas para debug
-console.log(`[API] Mode: ${isDevelopment ? 'DEV' : 'PROD'}`);
-console.log(`[API] BASE_URL: ${BASE_URL}`);
-console.log(`[API] WEBPAY_URL: ${WEBPAY_URL}`);
+console.log("[API] Mode: " + (isDevelopment ? 'DEV' : 'PROD'));
+console.log("[API] BASE_URL: " + BASE_URL);
+console.log("[API] WEBPAY_URL: " + WEBPAY_URL);
 
 
 export const getProductos = async () => {
     try {
-        const response = await fetch(`${BASE_URL}/productos/`)
+        const response = await fetch(BASE_URL+"/productos")
         if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
+            throw new Error("Error HTTP: " + response.status);
         }
         return response.json()
     } catch (error) {
@@ -31,7 +31,7 @@ export const getProductos = async () => {
 
 // Usuarios
 export const registrarUsuario = async (nombre, correo, password, codigo) => {
-    const response = await fetch(`${BASE_URL}/usuarios/registro`, {
+    const response = await fetch(BASE_URL + "/usuarios/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre, correo, password, codigo })
@@ -40,7 +40,7 @@ export const registrarUsuario = async (nombre, correo, password, codigo) => {
 }
 
 export const enviarCodigoVerificacion = async (correo, nombre) => {
-    const response = await fetch(`${BASE_URL}/usuarios/enviar-codigo`, {
+    const response = await fetch(BASE_URL + "/usuarios/enviar-codigo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, nombre }) 
@@ -49,7 +49,7 @@ export const enviarCodigoVerificacion = async (correo, nombre) => {
 }
 
 export const loginUsuario = async (correo, password) => {
-    const response = await fetch(`${BASE_URL}/usuarios/login`, {
+    const response = await fetch(BASE_URL + "/usuarios/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, password })
@@ -63,7 +63,7 @@ export const obtenerArchivosUsuario = async () => {
     
     if (!usuario || !usuario.id) return []
     
-    const response = await fetch(`${BASE_URL}/archivos/mis-archivos?usuario_id=${usuario.id}`)
+    const response = await fetch(BASE_URL + "/archivos/mis-archivos?usuario_id=" + usuario.id)
     
     if (!response.ok) {
         throw new Error("Error al obtener archivos")
@@ -77,7 +77,7 @@ export const subirArchivo = async (file) => {
     const formData = new FormData()
     formData.append("archivo", file)
 
-    const response = await fetch(`${BASE_URL}/archivos/subir?usuario_id=${usuario.id}`, {
+    const response = await fetch(BASE_URL + "/archivos/subir?usuario_id=" + usuario.id, {
         method: "POST",
         body: formData
     })
@@ -90,7 +90,7 @@ export const subirArchivo = async (file) => {
 
 // Carrito
 export const agregarAlCarrito = async (usuario_id, producto_id, cantidad) => {
-    const response = await fetch(`${BASE_URL}/carrito/agregar?usuario_id=${usuario_id}`, {
+    const response = await fetch(BASE_URL + "/carrito/agregar?usuario_id=" + usuario_id, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ producto_id, cantidad })
@@ -99,12 +99,12 @@ export const agregarAlCarrito = async (usuario_id, producto_id, cantidad) => {
 }
 
 export const verCarrito = async (usuario_id) => {
-    const response = await fetch(`${BASE_URL}/carrito/${usuario_id}`)
+    const response = await fetch(BASE_URL + "/carrito/" + usuario_id)
     return response.json()
 }
 
 export const pagarCarrito = async (usuario_id) => {
-    const response = await fetch(`${BASE_URL}/carrito/pagar/${usuario_id}`, {
+    const response = await fetch(BASE_URL + "/carrito/pagar/" + usuario_id, {
         method: "POST"
     })
     return response.json()
@@ -178,7 +178,7 @@ export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUr
     };
 
     // 6. Enviar request
-    const response = await fetch(`${WEBPAY_URL}/create`, {
+    const response = await fetch(WEBPAY_URL + "/create", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -189,7 +189,7 @@ export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUr
     // 7. Validar response HTTP
     if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || `Error HTTP ${response.status}`);
+        throw new Error(error.message || "Error HTTP " + response.status);
     }
 
     // 8. Parsear y validar respuesta
@@ -207,13 +207,6 @@ export const crearTransaccionPago = async (amount, buyOrder, sessionId, returnUr
     return result.data; // { token, url, buyOrder, sessionId }
 }
 
-/**
- * Paso 2: Confirmar transacción después de retorno de Webpay
- * Se llama cuando el usuario retorna de Webpay con el token en la URL
- *
- * @param {string} token - Token retornado por Webpay en la URL
- * @returns {Object} - Datos de la transacción confirmada
- */
 /**
  * Paso 2: Confirmar transacción después de retorno de Webpay
  * Se llama cuando el usuario retorna de Webpay con el token en la URL
@@ -244,7 +237,7 @@ export const confirmarTransaccionPago = async (token) => {
 
     try {
         // 3. Enviar request
-        const response = await fetch(`${WEBPAY_URL}/commit`, {
+        const response = await fetch(WEBPAY_URL + "/commit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -259,7 +252,7 @@ export const confirmarTransaccionPago = async (token) => {
                 throw new Error('Transacción ya fue procesada. No se puede procesar dos veces.');
             }
 
-            throw new Error(error.message || `Error HTTP ${response.status}`);
+            throw new Error(error.message || "Error HTTP " + response.status);
         }
 
         // 5. Parsear respuesta
@@ -296,7 +289,7 @@ export const confirmarTransaccionPago = async (token) => {
  * @returns {Object} - Estado actual de la transacción
  */
 export const consultarEstadoPago = async (token) => {
-    const response = await fetch(`${WEBPAY_URL}/status`, {
+    const response = await fetch(WEBPAY_URL + "/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token })
@@ -311,11 +304,10 @@ export const consultarEstadoPago = async (token) => {
  * @returns {Object} - Datos del reembolso
  */
 export const reembolsarPago = async (token) => {
-    const response = await fetch(`${WEBPAY_URL}/refund`, {
+    const response = await fetch(WEBPAY_URL + "/refund", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token })
     })
     return response.json()
 }
-

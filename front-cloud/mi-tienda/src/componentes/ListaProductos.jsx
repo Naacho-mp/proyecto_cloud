@@ -3,7 +3,7 @@ import { BsCartPlus, BsShop, BsX } from "react-icons/bs";
 
 // Detectar ambiente para la URL de imágenes
 const isDevelopment = import.meta.env.DEV;
-const BASE_URL = isDevelopment ? "http://localhost:8000/api" : "/api";
+const BASE_URL = "https://s3.sa-east-1.amazonaws.com/nicolasmendez.cl/products";
 
 export const ListaProductos = ({ productos = [], agregarAlCarrito, comprarAhora }) => {
   const [modalProducto, setModalProducto] = useState(null);
@@ -41,7 +41,7 @@ export const ListaProductos = ({ productos = [], agregarAlCarrito, comprarAhora 
               <div className="card h-100 shadow-sm border-0 carta-hover cursor-pointer" onClick={() => abrirModal(producto)} style={{ cursor: 'pointer' }}>
                 <div className="position-relative bg-light text-center p-3">
                   <img
-                    src={`${BASE_URL}/images/${producto.imagen}`}
+                    src={BASE_URL + "/" + producto.imagen}
                     className="img-fluid"
                     alt={producto.nombre}
                     style={{ height: '150px', objectFit: 'contain' }}/>
@@ -102,7 +102,7 @@ export const ListaProductos = ({ productos = [], agregarAlCarrito, comprarAhora 
                 <div className="row">
                   <div className="col-md-6 text-center mb-3 mb-md-0">
                     <img
-                      src={`${BASE_URL}/images/${modalProducto.imagen}`}
+                      src={BASE_URL + "/" + modalProducto.imagen}
                       className="img-fluid"
                       alt={modalProducto.nombre}
                       style={{ maxHeight: '400px', objectFit: 'contain' }}/>
@@ -114,7 +114,7 @@ export const ListaProductos = ({ productos = [], agregarAlCarrito, comprarAhora 
                     <div className="mb-4">
                       <h6 className="fw-bold mb-2">Descripción:</h6>
                       <p className="text-muted">
-                        {modalProducto.descripcion || `Producto de calidad: ${modalProducto.nombre}. Perfecto para tus necesidades.`}
+                        {modalProducto.descripcion || "Producto de calidad: " + modalProducto.nombre + ". Perfecto para tus necesidades."}
                       </p>
                     </div>
 
@@ -166,4 +166,3 @@ export const ListaProductos = ({ productos = [], agregarAlCarrito, comprarAhora 
     </>
   );
 };
-

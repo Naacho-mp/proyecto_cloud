@@ -33,7 +33,7 @@ import java.util.Map;     // Añadido para estructurar la respuesta limpia
  * Todos los endpoints validan las requests y retornan
  * respuestas JSON consistentes.
  */
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/java")
 @Validated

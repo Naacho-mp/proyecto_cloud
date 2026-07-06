@@ -16,19 +16,16 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         
-        // Permitir TODOS los orígenes (el @CrossOrigin en el controller también se aplica)
-        config.setAllowedOriginPatterns(Arrays.asList(".*"));
+        // Permitir explícitamente el origen de tu frontend
+        config.setAllowedOrigins(Arrays.asList("http://nicolasmendez.cl", "https://nicolasmendez.cl"));
         
         // Métodos permitidos, incluyendo explícitamente OPTIONS para el preflight
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
-        // Permitir TODAS las cabeceras
-        config.setAllowedHeaders(Arrays.asList("*"));
+        // Cabeceras comunes que tu fetch de JS enviará
+        config.setAllowedHeaders(Arrays.asList("Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"));
         
-        // Exponer cabeceras de respuesta importantes
-        config.setExposedHeaders(Arrays.asList("Content-Type", "Authorization", "X-Total-Count"));
-        
-        // Permitir credenciales
+        // Permitir credenciales si a futuro envías cookies o auth headers
         config.setAllowCredentials(true);
         
         // Mantener la respuesta preflight en caché del navegador por 1 hora

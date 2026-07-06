@@ -17,13 +17,13 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         
         // Permitir TODOS los orígenes (el @CrossOrigin en el controller también se aplica)
-        config.setAllowedOriginPatterns("*");
+        config.setAllowedOriginPatterns(Arrays.asList(".*"));
         
         // Métodos permitidos, incluyendo explícitamente OPTIONS para el preflight
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         
         // Permitir TODAS las cabeceras
-        config.setAllowedHeaders("*");
+        config.setAllowedHeaders(Arrays.asList("*"));
         
         // Exponer cabeceras de respuesta importantes
         config.setExposedHeaders(Arrays.asList("Content-Type", "Authorization", "X-Total-Count"));

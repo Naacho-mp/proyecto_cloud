@@ -16,7 +16,36 @@ function Login() {
       setError(resultado.detail)  
       return
     }
+    
+    // Guardar el usuario en el localStorage
     localStorage.setItem("usuario", JSON.stringify(resultado))
+
+    // Capturar la fecha y hora actuales del sistema
+    const ahora = new Date();
+    const fecha = ahora.toISOString().split('T')[0]; // Formato: YYYY-MM-DD
+    const hora = ahora.toTimeString().split(' ')[0]; // Formato: HH:MM:SS
+
+    // Enviar el registro de auditoría/evento al endpoint especificado
+    try {
+      await fetch("http://18.207.159.9:3005/guardar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          fecha: fecha,
+          hora: hora,
+          usuario_asociado: email, // O puedes usar resultado.correo / resultado.username según retorne tu backend
+          tipo_evento: "Login",
+          descripcion_evento: "Usuario inició sesión correctamente"
+        })
+      });
+    } catch (err) {
+      // Manejar el error de manera silenciosa para no bloquear el flujo del usuario si la bitácora falla
+      console.error("Error al guardar el registro de auditoría:", err);
+    }
+
+    // Redirigir a la vista de productos
     navigate('/productos')
   };
 
@@ -43,8 +72,8 @@ function Login() {
           </div>
           
           <div className='d-flex gap-2'>
-          <button type="submit" className="btn login-btn w-50">Iniciar sesión</button>
-          <button type="button" className="btn registrar-btn w-50" onClick={() => navigate('/registro')}>Registrarse</button>
+            <button type="submit" className="btn login-btn w-50">Iniciar sesión</button>
+            <button type="button" className="btn registrar-btn w-50" onClick={() => navigate('/registro')}>Registrarse</button>
           </div>
         </form>
       </div>

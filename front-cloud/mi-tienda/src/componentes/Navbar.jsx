@@ -7,9 +7,38 @@ export const Navbar = ({ cantidadCarrito = 0 }) => {
   const navigate = useNavigate();
   const usuario = JSON.parse(localStorage.getItem("usuario"))
 
-  const cerrarSesion = (e) => {
+  const cerrarSesion = async (e) => {
     e.preventDefault(); 
     
+    // Si hay un usuario en sesión, registramos el evento antes de borrar sus datos
+    if (usuario) {
+      const ahora = new Date();
+      const fecha = ahora.toISOString().split('T')[0]; // Formato: YYYY-MM-DD
+      const hora = ahora.toTimeString().split(' ')[0]; // Formato: HH:MM:SS
+
+      const logData = {
+        fecha: String(fecha),
+        hora: String(hora),
+        usuario_asociado: String(usuario.email || usuario.correo || "Usuario sin email"), 
+        tipo_evento: "Logout",
+        descripcion_evento: "Cierre de sesión exitosamente"
+      };
+
+      try {
+        await fetch("http://18.207.159.9:3005/guardar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(logData)
+        });
+      } catch (err) {
+        // Fallo silencioso para asegurar que el usuario pueda salir de todos modos si el logger falla
+        console.error("Error al registrar el evento de cierre de sesión:", err);
+      }
+    }
+    
+    // Limpieza de datos locales y redirección
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
   
@@ -26,13 +55,10 @@ export const Navbar = ({ cantidadCarrito = 0 }) => {
           {usuario && (
             <div className="d-flex align-items-center gap-2">
               <span className="text-muted fw-semibold" style={{ fontSize: '0.9rem' }}>
-
                 Bienvenido(a):{' '}
                 <Link to="/miperfil" className="text-dark fw-bold text-decoration-none">
                 {usuario.nombre} - Mi Perfil | </Link>  <a href="#" onClick={cerrarSesion}>Cerrar Sesión</a>
               </span>
-              
-
             </div>
           )}
 
@@ -73,4 +99,3 @@ export const Navbar = ({ cantidadCarrito = 0 }) => {
     </nav>
   )
 }
-

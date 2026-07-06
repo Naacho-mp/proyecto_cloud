@@ -1,29 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-// Datos de prueba basados en los requerimientos de tu tienda
-const MOCK_AUDIT_LOGS = [
-  { id: 1, description: 'Usuario inició sesión correctamente', type: 'LOGIN', date: '05/07/2026', time: '14:20:15', user: 'jaime@ucm.cl' },
-  { id: 2, description: 'Se cargó con éxito el archivo "productos.jpg" a S3', type: 'FILE_UPLOAD', date: '05/07/2026', time: '14:15:22', user: 'jaime@ucm.cl' },
-  { id: 3, description: 'Compra exitosa - Orden #10245 - Total: $8.700', type: 'PURCHASE', date: '05/07/2026', time: '13:40:10', user: 'nicolas@ucm.cl' },
-  { id: 4, description: 'Error 500 en endpoint /api/v1/productos', type: 'ERROR', date: '05/07/2026', time: '12:02:45', user: 'Anónimo' },
-  { id: 5, description: 'Registro de nuevo usuario en la plataforma', type: 'REGISTER', date: '05/07/2026', time: '10:05:00', user: 'felipe@ucm.cl' },
-  { id: 6, description: 'Cierre de sesión del usuario', type: 'LOGOUT', date: '04/07/2026', time: '23:58:12', user: 'nicolas@ucm.cl' },
-  { id: 7, description: 'Compra exitosa - Orden #10244 - Total: $2.500', type: 'PURCHASE', date: '04/07/2026', time: '19:30:00', user: 'jaime@ucm.cl' },
-  { id: 8, description: 'Fallo de autenticación - Contraseña incorrecta', type: 'ERROR', date: '04/07/2026', time: '15:10:22', user: 'admin' },
-  { id: 9, description: 'Usuario inició sesión correctamente', type: 'LOGIN', date: '04/07/2026', time: '15:09:55', user: 'admin' },
-  { id: 10, description: 'Se cargó con éxito el archivo "agenda.jpg" a S3', type: 'FILE_UPLOAD', date: '04/07/2026', time: '11:45:10', user: 'felipe@ucm.cl' },
-  { id: 11, description: 'Cierre de sesión del usuario', type: 'LOGOUT', date: '03/07/2026', time: '18:22:01', user: 'jaime@ucm.cl' },
-  { id: 12, description: 'Compra exitosa - Orden #10243 - Total: $5.990', type: 'PURCHASE', date: '03/07/2026', time: '16:15:34', user: 'jaime@ucm.cl' },
-  { id: 13, description: 'Error 404 - Recurso /ofertas-viejas no encontrado', type: 'ERROR', date: '03/07/2026', time: '14:00:02', user: 'Anónimo' }
-];
-
 // Tipos de eventos únicos para el selector de filtros
 const EVENT_TYPES = ['Todos', 'LOGIN', 'LOGOUT', 'REGISTER', 'PURCHASE', 'FILE_UPLOAD', 'ERROR'];
 
 // Clase de badge de Bootstrap por tipo de evento
 const getTypeBadgeClass = (type) => {
   const base = "badge rounded-pill ";
-  switch (type) {
+  // Convertimos a mayúsculas para evitar problemas de inconsistencia de nombres (ej: 'Login' vs 'LOGIN')
+  const eventType = type ? type.toUpperCase() : '';
+  
+  switch (eventType) {
     case 'LOGIN':
     case 'LOGOUT':
       return base + "bg-primary-subtle text-primary";
@@ -41,15 +27,41 @@ const getTypeBadgeClass = (type) => {
 };
 
 export default function Dashboard() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(null);
   const [selectedType, setSelectedType] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Cargar los datos desde la API al montar el componente
+  useEffect(() => {
+    const cargarLogs = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("http://18.207.159.9:3005/obtener");
+        if (!response.ok) {
+          throw new Error("Error HTTP: " + response.status);
+        }
+        const datos = await response.json();
+        // Asumiendo que el endpoint devuelve un array directo o un objeto con los datos
+        setLogs(Array.isArray(datos) ? datos : []);
+      } catch (err) {
+        console.error("Error al obtener los logs:", err);
+        setErrorCarga("No se pudieron cargar los registros de auditoría.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarLogs();
+  }, []);
+
   // 1. Filtrar los logs según el tipo seleccionado
   const filteredLogs = useMemo(() => {
-    if (selectedType === 'Todos') return MOCK_AUDIT_LOGS;
-    return MOCK_AUDIT_LOGS.filter(log => log.type === selectedType);
-  }, [selectedType]);
+    if (selectedType === 'Todos') return logs;
+    return logs.filter(log => (log.tipo_evento || '').toUpperCase() === selectedType.toUpperCase());
+  }, [selectedType, logs]);
 
   // Reiniciar a la primera página cuando cambia el filtro
   useEffect(() => {
@@ -64,20 +76,45 @@ export default function Dashboard() {
     return filteredLogs.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredLogs, currentPage]);
 
-  // Métricas rápidas para las tarjetas de resumen
+  // Métricas rápidas calculadas dinámicamente con los datos de la API
   const summary = useMemo(() => {
-    const errores = MOCK_AUDIT_LOGS.filter(l => l.type === 'ERROR').length;
-    const compras = MOCK_AUDIT_LOGS.filter(l => l.type === 'PURCHASE').length;
-    const usuarios = new Set(MOCK_AUDIT_LOGS.map(l => l.user).filter(u => u !== 'Anónimo')).size;
+    const errores = logs.filter(l => (l.tipo_evento || '').toUpperCase() === 'ERROR').length;
+    const compras = logs.filter(l => (l.tipo_evento || '').toUpperCase() === 'PURCHASE').length;
+    const usuarios = new Set(logs.map(l => l.usuario_asociado).filter(u => u && u !== 'Anónimo')).size;
+    
     return [
-      { label: 'Eventos totales', value: MOCK_AUDIT_LOGS.length, color: 'text-dark' },
+      { label: 'Eventos totales', value: logs.length, color: 'text-dark' },
       { label: 'Compras exitosas', value: compras, color: 'text-success' },
       { label: 'Errores detectados', value: errores, color: 'text-danger' },
       { label: 'Usuarios activos', value: usuarios, color: 'text-primary' },
     ];
-  }, []);
+  }, [logs]);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
+
+  if (loading) {
+    return (
+      <div className="container my-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando eventos...</span>
+        </div>
+        <p className="mt-2 text-muted">Obteniendo registros de auditoría en tiempo real...</p>
+      </div>
+    );
+  }
+
+  if (errorCarga) {
+    return (
+      <div className="container my-5 text-center">
+        <div className="alert alert-danger shadow-sm">
+          <h4 className="alert-heading">Hubo un problema</h4>
+          <p>{errorCarga}</p>
+          <hr />
+          <p className="mb-0">Verifica que el servicio backend en el puerto 3005 esté corriendo correctamente.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container my-5">
@@ -127,7 +164,7 @@ export default function Dashboard() {
           </div>
           <div className="col-12 col-md-8 text-md-end">
             <small className="text-muted">
-              Mostrando {filteredLogs.length} de {MOCK_AUDIT_LOGS.length} eventos totales
+              Mostrando {filteredLogs.length} de {logs.length} eventos totales
             </small>
           </div>
         </div>
@@ -150,17 +187,19 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedLogs.map((log) => (
-                  <tr key={log.id}>
+                {paginatedLogs.map((log, index) => (
+                  <tr key={log.id || index}>
                     <td className="fw-semibold text-dark" style={{ maxWidth: '350px' }}>
-                      {log.description}
+                      {log.descripcion_evento || log.description || "Sin descripción"}
                     </td>
                     <td>
-                      <span className={getTypeBadgeClass(log.type)}>{log.type}</span>
+                      <span className={getTypeBadgeClass(log.tipo_evento || log.type)}>
+                        {log.tipo_evento || log.type || "UNKNOWN"}
+                      </span>
                     </td>
-                    <td className="text-muted">{log.date}</td>
-                    <td className="text-muted">{log.time}</td>
-                    <td className="text-muted">{log.user}</td>
+                    <td className="text-muted">{log.fecha || log.date}</td>
+                    <td className="text-muted">{log.hora || log.time}</td>
+                    <td className="text-muted">{log.usuario_asociado || log.user || "Anónimo"}</td>
                   </tr>
                 ))}
               </tbody>

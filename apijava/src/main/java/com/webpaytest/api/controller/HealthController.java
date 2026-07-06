@@ -39,7 +39,7 @@ public class HealthController {
     public ResponseEntity<ApiResponse<String>> info() {
         String message = "Webpay Plus Integration API v1.0 - "
                 + "Integration Environment - "
-                + "Endpoints disponibles: "
+                + "Endpoints disponibles:TEST "
                 + "/java/create, /java/commit, /java/status, /java/refund";
 
         ApiResponse<String> response = ApiResponse.success(message, "Información de la API");

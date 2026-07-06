@@ -50,12 +50,12 @@ function Home({ agregarAlCarrito }) {
       const buyOrder = `ORD-${Date.now()}-${usuario.id}`
       const sessionId = String(usuario.id)
 
-      let returnUrl = `${window.location.origin}/webpay-retorno`
-      if (!returnUrl.includes('localhost') && !returnUrl.includes('127.0.0.1')) {
-        if (returnUrl.startsWith('http://')) {
-          returnUrl = returnUrl.replace('http://', 'https://')
-        }
-      }
+      let returnUrl = `https://nicolasmendez.cl`
+      // if (!returnUrl.includes('localhost') && !returnUrl.includes('127.0.0.1')) {
+      //   if (returnUrl.startsWith('http://')) {
+      //     returnUrl = returnUrl.replace('http://', 'https://')
+      //   }
+      // }
 
       // 4. Guardar producto único en localStorage para compra directa
       localStorage.setItem('compraDirect', JSON.stringify({ ...producto, cantidad: 1 }))

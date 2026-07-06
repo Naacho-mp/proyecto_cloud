@@ -1,3 +1,4 @@
+
 package com.webpaytest.api.payment;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,15 +40,18 @@ public class MercadoPagoGateway implements PaymentGateway {
     private final ObjectMapper mapper = new ObjectMapper();
 
     public MercadoPagoGateway(String accessToken,
-                              String successUrl,
-                              String failureUrl,
-                              String pendingUrl,
+                              String successUrl,  // Se mantiene en la firma pero se ignora el parámetro
+                              String failureUrl,  // Se mantiene en la firma pero se ignora el parámetro
+                              String pendingUrl,  // Se mantiene en la firma pero se ignora el parámetro
                               TokenStore tokenStore) {
         this.accessToken = accessToken;
-        this.successUrl = successUrl;
-        this.failureUrl = failureUrl;
-        this.pendingUrl = pendingUrl;
         this.tokenStore = tokenStore;
+        
+        // URLs hardcodeadas directamente aquí
+        this.successUrl = "http://nicolasmendez.cl/success";
+        this.failureUrl = "http://nicolasmendez.cl/failure";
+        this.pendingUrl = "http://nicolasmendez.cl/pending";
+        
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(20))
                 .build();
@@ -74,7 +78,7 @@ public class MercadoPagoGateway implements PaymentGateway {
             Map<String, Object> backUrls = new HashMap<>();
             if (successUrl != null && !successUrl.isBlank()) {
                 backUrls.put("success", successUrl);
-                body.put("auto_return", "approved");   // mover aquí
+                body.put("auto_return", "approved");   // Autorretorno activado para redirigir solo
             }
             if (failureUrl != null && !failureUrl.isBlank()) backUrls.put("failure", failureUrl);
             if (pendingUrl != null && !pendingUrl.isBlank()) backUrls.put("pending", pendingUrl);
@@ -119,7 +123,6 @@ public class MercadoPagoGateway implements PaymentGateway {
         try {
             String paymentId = resolvePaymentIdByPreference(request.getToken());
             if (paymentId == null) {
-                // Simular caso transacción ya aprobada y commit duplicado no aplica en MP
                 throw new WebpayException("No se encontró un pago asociado al token (preference_id)", "COMMIT_ERROR", 400);
             }
             JsonNode payment = getPayment(paymentId);
@@ -138,7 +141,6 @@ public class MercadoPagoGateway implements PaymentGateway {
         try {
             String paymentId = resolvePaymentIdByPreference(request.getToken());
             if (paymentId == null) {
-                // Si no existe aún un pago, devolvemos estado pendiente
                 return GetStatusResponse.builder()
                         .buyOrder(null)
                         .cardNumber("****")
@@ -181,7 +183,6 @@ public class MercadoPagoGateway implements PaymentGateway {
             }
             JsonNode refund = mapper.readTree(resp.body());
             long amount = refund.path("amount").asLong(0);
-            // Balance: no existe directo; dejamos 0 para reembolso total
             return RefundTransactionResponse.builder()
                     .type("REFUND")
                     .token(request.getToken())
@@ -205,10 +206,9 @@ public class MercadoPagoGateway implements PaymentGateway {
 
     private String resolvePaymentIdByPreference(String preferenceId) throws Exception {
         if (preferenceId == null) return null;
-        // 1) Revisar cache/mapping
         var cached = tokenStore.getPaymentId(preferenceId);
         if (cached.isPresent()) return cached.get();
-        // 2) Consultar Merchant Orders por preference_id
+        
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(MP_API_BASE + "/merchant_orders?preference_id=" + preferenceId))
                 .timeout(Duration.ofSeconds(25))
@@ -277,7 +277,6 @@ public class MercadoPagoGateway implements PaymentGateway {
 
     private MappedPayment mapPaymentCommon(JsonNode p) {
         String status = p.path("status").asText("");
-        String statusDetail = p.path("status_detail").asText("");
         String mappedStatus;
         int responseCode;
         switch (status) {
@@ -292,7 +291,7 @@ public class MercadoPagoGateway implements PaymentGateway {
                 break;
             default:
                 mappedStatus = "FAILED";
-                responseCode = 1; // genérico
+                responseCode = 1;
         }
         String lastFour = p.path("card").path("last_four_digits").asText("");
         String cardMasked = (lastFour.isBlank() ? "****" : ("****" + lastFour));
@@ -331,3 +330,4 @@ public class MercadoPagoGateway implements PaymentGateway {
         }
     }
 }
+

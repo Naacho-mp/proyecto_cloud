@@ -1,36 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { BsCloudUpload, BsTrash, BsFileEarmarkText } from 'react-icons/bs';
+import { BsCloudUpload, BsFileEarmarkText } from 'react-icons/bs';
 import { obtenerArchivosUsuario, subirArchivo } from '../servicios/api';
 
-
 export const MiPerfil = () => {
+  // Aseguramos que busque la propiedad exacta 'correo'
   const usuario = JSON.parse(localStorage.getItem("usuario")) || { nombre: "Usuario", correo: "correo@ucm.cl" };
 
-  // Límite de almacenamiento ficticio: 500 MB (en Bytes para los cálculos)
-  const LIMITE_ALMACENAMIENTO = 2 * 1024 * 1024 * 1024; 
+  const LIMITE_ALMACENAMIENTO = 2 * 1024 * 1024 * 1024;
 
-  // Estado para la lista de archivos (con algunos datos de prueba)
-    const [archivos, setArchivos] = useState([]);
+  const [archivos, setArchivos] = useState([]);
 
-  // cargar archivos al entrar al perfil
   useEffect(() => {
     obtenerArchivosUsuario()
       .then(data => setArchivos(data))
-      .catch(err => console.error(err))
-  }, [])
+      .catch(err => console.error("Error al obtener archivos:", err))
+  }, []);
 
-
-  // --- CÁLCULOS DE ESPACIO ---
-  const espacioUtilizadoBytes = archivos.reduce((acc, curr) => acc + curr.tamano_bytes, 0);
+  const espacioUtilizadoBytes = archivos.reduce((acc, curr) => acc + (curr.tamano_bytes || 0), 0);
   const espacioDisponibleBytes = LIMITE_ALMACENAMIENTO - espacioUtilizadoBytes;
   const porcentajeUtilizado = (espacioUtilizadoBytes / LIMITE_ALMACENAMIENTO) * 100;
 
-  // --- REQUISITO: Función auxiliar para formatear Bytes a MB de forma amigable ---
   const formatearTamano = (bytes) => {
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
-  // --- REQUISITO: Manejar la subida de archivos 
+  // --- Función dedicada para registrar el evento de auditoría ---
+  const registrarEventoAuditoria = async (nombreArchivo) => {
+    const ahora = new Date();
+    const fecha = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
+    const hora = telemetryHora(ahora); // Extrae HH:MM:SS de manera limpia
+
+    const logData = {
+      fecha: String(fecha),
+      hora: String(hora),
+      usuario_asociado: String(usuario.correo || "anonimo@ucm.cl"),
+      tipo_evento: "FILE_UPLOAD",
+      descripcion_evento: `Se subió el archivo "${nombreArchivo}" a s3`
+    };
+
+    try {
+      console.log("Enviando JSON de auditoría a 3005...", logData);
+      const res = await fetch("http://18.207.159.9:3005/guardar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(logData)
+      });
+
+      if (res.ok) {
+        console.log("Log de auditoría guardado correctamente en el puerto 3005.");
+      } else {
+        console.error("El endpoint de auditoría respondió con error:", res.status);
+      }
+    } catch (err) {
+      console.error("Error de red/CORS al contactar el endpoint de auditoría:", err);
+    }
+  };
+
+  // Función auxiliar para obtener la hora sin textos extraños de zona horaria
+  const telemetryHora = (dateObj) => {
+    const hrs = String(dateObj.getHours()).padStart(2, '0');
+    const mins = String(dateObj.getMinutes()).padStart(2, '0');
+    const secs = String(dateObj.getSeconds()).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}`;
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -40,16 +75,24 @@ export const MiPerfil = () => {
       return;
     }
 
-    try {
-      const archivoSubido = await subirArchivo(file) // llama al backend
-      setArchivos([...archivos, archivoSubido])  // agrega el archivo real con id de RDS
-      alert("Archivo subido exitosamente")    
-    } catch (err) {
-      alert("Error al subir el archivo")
-      console.error(err)
-    }
-};
+    // 🔥 MODIFICACIÓN CRUCIAL: El log se ejecuta de forma asíncrona EN PARALELO al principio.
+    // Al quitar el "await", no congelamos la UI ni esperamos la subida pesada.
+    registrarEventoAuditoria(file.name);
 
+    try {
+      const archivoSubido = await subirArchivo(file);
+  
+      if (archivoSubido) {
+        setArchivos([...archivos, archivoSubido]);
+        alert("Archivo subido exitosamente");
+      } else {
+        console.warn("archivoSubido fue nulo o inválido.");
+      }
+    } catch (err) {
+      alert("Error al subir el archivo en la API principal");
+      console.error("rror detallado de la subida:", err);
+    }
+  };
 
   return (
     <div className="container my-5">
@@ -66,20 +109,18 @@ export const MiPerfil = () => {
         <div className="col-12 col-lg-4">
           <div className="card border-0 shadow-sm p-4 bg-white h-100">
             <h5 className="card-title fw-bold mb-4 text-secondary">Almacenamiento en la Nube</h5>
-            
-            {/* Barra de progreso */}
+
             <div className="progress mb-4" style={{ height: '12px', borderRadius: '10px' }}>
-              <div 
-                className={`progress-bar transition-all ${porcentajeUtilizado > 85 ? 'bg-danger' : 'bg-success'}`}
-                role="progressbar" 
-                style={{ width: `${porcentajeUtilizado}%` }}
-                aria-valuenow={porcentajeUtilizado} 
-                aria-valuemin="0" 
+              <div
+                className={"progress-bar transition-all " + (porcentajeUtilizado > 85 ? 'bg-danger' : 'bg-success')}
+                role="progressbar"
+                style={{ width: porcentajeUtilizado + "%" }}
+                aria-valuenow={porcentajeUtilizado}
+                aria-valuemin="0"
                 aria-valuemax="100"
               ></div>
             </div>
 
-            {/* Métrica: Espacio Utilizado */}
             <div className="d-flex align-items-center mb-3 p-3 bg-light rounded">
               <div className="flex-grow-1">
                 <small className="text-muted d-block fw-semibold text-uppercase" style={{ fontSize: '0.75rem' }}>Espacio Utilizado</small>
@@ -90,7 +131,6 @@ export const MiPerfil = () => {
               </span>
             </div>
 
-            {/* Métrica: Espacio Disponible */}
             <div className="d-flex align-items-center p-3 bg-light rounded">
               <div className="flex-grow-1">
                 <small className="text-muted d-block fw-semibold text-uppercase" style={{ fontSize: '0.75rem' }}>Espacio Disponible</small>
@@ -101,22 +141,20 @@ export const MiPerfil = () => {
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: Botón de subida y Tabla de archivos */}
         <div className="col-12 col-lg-8">
           <div className="card border-0 shadow-sm p-4 bg-white h-100">
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
               <h5 className="card-title fw-bold mb-0 text-secondary">Mis Archivos Subidos</h5>
-              
-              {/* Botón de subir archivos conectado al input real invisible */}
+
               <div>
-                <input 
-                  type="file" 
-                  id="input-archivo-oculto" 
-                  className="d-none" 
-                  onChange={handleFileChange} 
+                <input
+                  type="file"
+                  id="input-archivo-oculto"
+                  className="d-none"
+                  onChange={handleFileChange}
                 />
-                <label 
-                  htmlFor="input-archivo-oculto" 
+                <label
+                  htmlFor="input-archivo-oculto"
                   className="btn btn-primary d-inline-flex align-items-center gap-2 px-3 py-2 shadow-sm"
                   style={{ cursor: 'pointer', borderRadius: '8px' }}
                 >
@@ -126,7 +164,6 @@ export const MiPerfil = () => {
               </div>
             </div>
 
-            {/* Tabla de Archivos */}
             <div className="table-responsive">
               {archivos.length === 0 ? (
                 <div className="text-center py-5 text-muted">
@@ -140,18 +177,19 @@ export const MiPerfil = () => {
                       <th scope="col" style={{ width: '50%' }}>Nombre</th>
                       <th scope="col">Tamaño</th>
                       <th scope="col">Fecha</th>
-                      
                     </tr>
                   </thead>
                   <tbody>
-                    {archivos.map((archivo) => (
-                      <tr key={archivo.id}>
+                    {archivos.map((archivo, index) => (
+                      <tr key={archivo.id || index}>
                         <td className="text-truncate fw-semibold text-dark" style={{ maxWidth: '250px' }}>
                           <BsFileEarmarkText className="me-2 text-primary" size={16} />
-                          {archivo.nombre_original}
+                          {archivo.nombre_original || "Archivo sin nombre"}
                         </td>
-                        <td className="text-muted">{formatearTamano(archivo.tamano_bytes)}</td>
-                        <td className="text-muted">{new Date(archivo.fecha_subida).toLocaleDateString()}</td>
+                        <td className="text-muted">{formatearTamano(archivo.tamano_bytes || 0)}</td>
+                        <td className="text-muted">
+                          {archivo.fecha_subida ? new Date(archivo.fecha_subida).toLocaleDateString() : "---"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

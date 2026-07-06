@@ -29,7 +29,6 @@ function Registro() {
       const data = await enviarCodigoVerificacion(email, nombre);
       
       if (data.detail) {
-        // Si el backend responde con un error 
         setError(data.detail);
       } else {
         setMensajeExito('Código Enviado! Revisa tu email');
@@ -46,48 +45,54 @@ function Registro() {
     e.preventDefault();
     setError('');
 
-    // Validar contraseñas en el frontend antes de ir al backend
+    // Validar contraseñas en el frontend
     if (password !== confirmarPassword) {
       setError('Las contraseñas no coinciden.');
       return;
     }
 
     try {
-      // Llamamos a la API registro
+      // 1. Llamamos a la API principal de registro de usuarios
       const data = await registrarUsuario(nombre, email, password, codigo);
 
       if (data.detail) {
-        // Si el código es inválido o expiró se manda el msje acá
         setError(data.detail);
       } else {
-        // Capturar la fecha y hora actuales del sistema para la bitácora
+        // 2. Si el registro es exitoso, capturamos el tiempo del sistema
         const ahora = new Date();
-        const fecha = ahora.toISOString().split('T')[0]; // Formato: YYYY-MM-DD
-        const hora = ahora.toTimeString().split(' ')[0]; // Formato: HH:MM:SS
+        const fecha = ahora.toISOString().split('T')[0]; 
+        const hora = ahora.toTimeString().split(' ')[0]; 
 
         const logData = {
           fecha: String(fecha),
           hora: String(hora),
           usuario_asociado: String(email),
-          tipo_evento: "Register",
+          tipo_evento: "REGISTER",
           descripcion_evento: "Usuario registrado correctamente"
         };
 
-        // Enviar el registro de auditoría al endpoint especificado
+        // 3. Enviamos el JSON de auditoría al endpoint en el puerto 3005
         try {
-          await fetch("http://18.207.159.9:3005/guardar", {
+          const logResponse = await fetch("http://18.207.159.9:3005/guardar", {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
             },
             body: JSON.stringify(logData)
           });
+          
+          if (!logResponse.ok) {
+            console.error("El servidor de logs respondió con código de error:", logResponse.status);
+          } else {
+            const logResultado = await logResponse.json();
+            console.log("Bitácora guardada exitosamente:", logResultado);
+          }
         } catch (err) {
-          // Manejo silencioso para no bloquear la experiencia de registro si el log falla
-          console.error("Error al guardar el registro de auditoría:", err);
+          // Si hay error de red o de CORS, lo veremos directamente en la consola del navegador
+          console.error("Error de red/CORS al conectar con el servicio de logs (3005):", err);
         }
 
-        // Registro exitoso, redirigimos al login
+        // 4. Continuamos con el flujo normal de la app
         alert('Usuario registrado con éxito. Ahora puedes iniciar sesión.');
         navigate('/login');
       }
@@ -131,6 +136,7 @@ function Registro() {
               required
             />
           </div>
+          
           <div className="mb-3">
             <label htmlFor="password" className="form-label fw-semibold">Contraseña</label>
             <input
@@ -143,6 +149,7 @@ function Registro() {
               required
             />
           </div>
+          
           <div className="mb-3">
             <label htmlFor="confirmarPassword" className="form-label fw-semibold">Confirmar contraseña</label>
             <input

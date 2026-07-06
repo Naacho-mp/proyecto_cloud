@@ -6,21 +6,21 @@ const EVENT_TYPES = ['Todos', 'LOGIN', 'LOGOUT', 'REGISTER', 'PURCHASE', 'FILE_U
 // Clase de badge de Bootstrap por tipo de evento
 const getTypeBadgeClass = (type) => {
   const base = "badge rounded-pill ";
-  // Convertimos a mayúsculas para evitar problemas de inconsistencia de nombres (ej: 'Login' vs 'LOGIN')
   const eventType = type ? type.toUpperCase() : '';
   
   switch (eventType) {
     case 'LOGIN':
+      return base + "bg-primary-subtle text-primary";      // Azul (Entrada)
     case 'LOGOUT':
-      return base + "bg-primary-subtle text-primary";
+      return base + "bg-secondary-subtle text-secondary";  // Gris (Salida)
     case 'REGISTER':
-      return base + "bg-info-subtle text-info";
+      return base + "bg-info-subtle text-info";            // Celeste
     case 'PURCHASE':
-      return base + "bg-success-subtle text-success";
+      return base + "bg-success-subtle text-success";      // Verde
     case 'FILE_UPLOAD':
-      return base + "bg-warning-subtle text-warning";
+      return base + "bg-warning-subtle text-warning";      // Amarillo
     case 'ERROR':
-      return base + "bg-danger-subtle text-danger";
+      return base + "bg-danger-subtle text-danger";        // Rojo
     default:
       return base + "bg-secondary-subtle text-secondary";
   }
@@ -36,6 +36,39 @@ export default function Dashboard() {
 
   // Cargar los datos desde la API al montar el componente
   useEffect(() => {
+    // VALIDACIÓN DE SEGURIDAD
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario"));
+    
+    if (!usuarioActivo || !usuarioActivo.nombre || usuarioActivo.nombre.toLowerCase() !== "admin") {
+      const correoIntruso = usuarioActivo?.correo || "Anónimo";
+      const ahora = new Date();
+      const fecha = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Formato local chileno forzado a 24 horas (HH:MM:SS)
+      const hora = ahora.toLocaleTimeString('es-CL', { hour12: false }); 
+
+      // DISPARAR LOG DE ERROR EN PARALELO (Sin await para que sea instantáneo)
+      fetch("http://18.207.159.9:3005/guardar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          tipo_evento: "ERROR",
+          descripcion_evento: `Intento de acceso no autorizado a la URL del Dashboard`,
+          usuario_asociado: correoIntruso,
+          fecha: fecha,
+          hora: hora
+        })
+      }).catch(err => console.error("Error al registrar la intrusión en la bitácora:", err));
+
+      // BLOQUEAR LA PANTALLA INMEDIATAMENTE
+      setErrorCarga("Acceso denegado. Solo el usuario 'admin' puede ver este panel.");
+      setLoading(false);
+      return; // Detiene el resto del useEffect
+    }
+
+    // SI ES ADMIN, SE CARGAN LOS LOGS NORMALMENTE
     const cargarLogs = async () => {
       try {
         setLoading(true);
@@ -44,11 +77,16 @@ export default function Dashboard() {
           throw new Error("Error HTTP: " + response.status);
         }
         const datos = await response.json();
-        // Asumiendo que el endpoint devuelve un array directo o un objeto con los datos
-        setLogs(Array.isArray(datos) ? datos : []);
+        
+        if (Array.isArray(datos)) {
+          const datosInvertidos = [...datos].reverse();
+          setLogs(datosInvertidos);
+        } else {
+          setLogs([]);
+        }
       } catch (err) {
         console.error("Error al obtener los logs:", err);
-        setErrorCarga("No se pudieron cargar los registros de auditoría.");
+        setErrorCarga("No se pudo establecer conexión con el servicio de auditoría en este momento.");
       } finally {
         setLoading(false);
       }
@@ -57,7 +95,7 @@ export default function Dashboard() {
     cargarLogs();
   }, []);
 
-  // 1. Filtrar los logs según el tipo seleccionado
+  // Filtrar los logs según el tipo seleccionado
   const filteredLogs = useMemo(() => {
     if (selectedType === 'Todos') return logs;
     return logs.filter(log => (log.tipo_evento || '').toUpperCase() === selectedType.toUpperCase());
@@ -68,7 +106,7 @@ export default function Dashboard() {
     setCurrentPage(1);
   }, [selectedType]);
 
-  // 2. Calcular la paginación sobre los datos ya filtrados
+  // Calcular la paginación sobre los datos ya filtrados
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / itemsPerPage));
 
   const paginatedLogs = useMemo(() => {
@@ -106,11 +144,9 @@ export default function Dashboard() {
   if (errorCarga) {
     return (
       <div className="container my-5 text-center">
-        <div className="alert alert-danger shadow-sm">
-          <h4 className="alert-heading">Hubo un problema</h4>
-          <p>{errorCarga}</p>
-          <hr />
-          <p className="mb-0">Verifica que el servicio backend en el puerto 3005 esté corriendo correctamente.</p>
+        <div className="alert alert-danger shadow-sm" style={{ maxWidth: '550px', margin: '0 auto', borderRadius: '12px' }}>
+          <h4 className="alert-heading fw-bold mb-2">Acción No Permitida u Error de Conexión</h4>
+          <p className="mb-0 fs-5 text-secondary-dark">{errorCarga}</p>
         </div>
       </div>
     );
@@ -193,7 +229,8 @@ export default function Dashboard() {
                       {log.descripcion_evento || log.description || "Sin descripción"}
                     </td>
                     <td>
-                      <span className={getTypeBadgeClass(log.tipo_evento || log.type)}>
+                      {/* Enlazado con "text-uppercase" para estandarizar la visualización */}
+                      <span className={getTypeBadgeClass(log.tipo_evento || log.type) + " text-uppercase"}>
                         {log.tipo_evento || log.type || "UNKNOWN"}
                       </span>
                     </td>

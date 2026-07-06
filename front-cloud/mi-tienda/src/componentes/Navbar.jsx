@@ -7,6 +7,9 @@ export const Navbar = ({ cantidadCarrito = 0 }) => {
   const navigate = useNavigate();
   const usuario = JSON.parse(localStorage.getItem("usuario"))
 
+  // Validar directamente por el nombre "admin" (en minúsculas para asegurar)
+  const esAdmin = usuario && usuario.nombre && usuario.nombre.toLowerCase() === "admin";
+
   const cerrarSesion = async (e) => {
     e.preventDefault(); 
     
@@ -20,7 +23,7 @@ export const Navbar = ({ cantidadCarrito = 0 }) => {
         fecha: String(fecha),
         hora: String(hora),
         usuario_asociado: String(usuario.email || usuario.correo || "Usuario sin email"), 
-        tipo_evento: "Logout",
+        tipo_evento: "LOGOUT",
         descripcion_evento: "Cierre de sesión exitosamente"
       };
 
@@ -88,14 +91,22 @@ export const Navbar = ({ cantidadCarrito = 0 }) => {
           </button>
         </div>
 
+        {/* --- MENÚ DE ENLACES PRINCIPALES --- */}
         <div className="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div className="navbar-nav ms-lg-5">
             <a className="nav-link active fw-semibold" aria-current="page" href="#">Inicio</a>
             <a className="nav-link" href="#">Productos</a>
             <a className="nav-link" href="#">Ofertas</a>
+            
+            {/* Se muestra solo al admin */}
+            {esAdmin && (
+              <Link className="nav-link text-primary fw-bold" to="/dashboard">
+                Dashboard
+              </Link>
+            )}
           </div>
         </div>
+
       </div>
     </nav>
-  )
-}
+  )}

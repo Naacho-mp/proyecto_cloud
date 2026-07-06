@@ -100,3 +100,6 @@ async def health_check():
 async def health_root():
     return {"status": "healthy"}
 
+@app.get("/api/test")
+async def test():
+    return {"status": 200}

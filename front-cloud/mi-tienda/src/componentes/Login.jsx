@@ -36,7 +36,7 @@ function Login() {
           fecha: fecha,
           hora: hora,
           usuario_asociado: email, // O puedes usar resultado.correo / resultado.username según retorne tu backend
-          tipo_evento: "Login",
+          tipo_evento: "LOGIN",
           descripcion_evento: "Usuario inició sesión correctamente"
         })
       });

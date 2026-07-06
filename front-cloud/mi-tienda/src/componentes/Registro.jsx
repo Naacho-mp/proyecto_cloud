@@ -60,6 +60,33 @@ function Registro() {
         // Si el código es inválido o expiró se manda el msje acá
         setError(data.detail);
       } else {
+        // Capturar la fecha y hora actuales del sistema para la bitácora
+        const ahora = new Date();
+        const fecha = ahora.toISOString().split('T')[0]; // Formato: YYYY-MM-DD
+        const hora = ahora.toTimeString().split(' ')[0]; // Formato: HH:MM:SS
+
+        const logData = {
+          fecha: String(fecha),
+          hora: String(hora),
+          usuario_asociado: String(email),
+          tipo_evento: "Register",
+          descripcion_evento: "Usuario registrado correctamente"
+        };
+
+        // Enviar el registro de auditoría al endpoint especificado
+        try {
+          await fetch("http://18.207.159.9:3005/guardar", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(logData)
+          });
+        } catch (err) {
+          // Manejo silencioso para no bloquear la experiencia de registro si el log falla
+          console.error("Error al guardar el registro de auditoría:", err);
+        }
+
         // Registro exitoso, redirigimos al login
         alert('Usuario registrado con éxito. Ahora puedes iniciar sesión.');
         navigate('/login');
@@ -76,7 +103,6 @@ function Registro() {
         <p className="login-subtitulo">Crea tu cuenta para continuar</p>
         {error && <div className="alert alert-danger py-2">{error}</div>}
         {mensajeExito && <div className="alert alert-success py-2">{mensajeExito}</div>}
-
 
         <form onSubmit={handleSubmit}>
 
@@ -146,14 +172,13 @@ function Registro() {
                 type="button" 
                 className="btn codigo-btn" 
                 onClick={handleEnviarCodigo}
-                disabled={cargandoCodigo} // Deshabilita el botón se procesa
+                disabled={cargandoCodigo}
               > 
                 {cargandoCodigo ? 'Enviando...' : 'Enviar'} 
               </button>
             </div>
           </div>
 
-          
           <div className="d-flex gap-2 mt-4">
             <button
               type="button"

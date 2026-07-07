@@ -3,7 +3,7 @@ name: build and push para AWS ECR - ECS
 on:
   push:
     branches:
-      - main
+      - test/restore
 
 jobs:
   build-and-push:

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BsClockHistory } from 'react-icons/bs';
-
+//test
 const PagoPending = () => {
   const navigate = useNavigate();
 
